@@ -50,7 +50,7 @@ func main() {
 
 	host, err := libp2p.New(
 		ctx,
-		libp2p.ListenAddrStrings("/ip4/192.168.1.195/tcp/4001"),
+		libp2p.ListenAddrStrings("/ip4/18.223.123.4/tcp/4001"),
 		libp2p.Identity(prvKey),
 		libp2p.NATPortMap(),
 	)
