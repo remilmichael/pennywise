@@ -15,6 +15,7 @@ import (
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	record "github.com/libp2p/go-libp2p-record"
 	multiaddr "github.com/multiformats/go-multiaddr"
+	circuit "github.com/libp2p/go-libp2p-circuit"
 )
 
 func main() {
@@ -53,6 +54,7 @@ func main() {
 		libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/4001"),
 		libp2p.Identity(prvKey),
 		libp2p.NATPortMap(),
+		libp2p.EnableRelay(circuit.OptHop),
 	)
 	checkError(err)
 	/*
