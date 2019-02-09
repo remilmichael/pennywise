@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Add Your buddy!</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link href="public/css/addfriend.css" type="text/css" rel="stylesheet">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+</head>
+<body>
+    {{ if .Action }}
+    <div class="row">
+        {{ if .Error }}
+        <div class="alert alert-danger mt-0 mx-auto">
+            <strong>Error!</strong> {{ .Msg }}
+        </div>
+        {{ end }}
+        {{if .Success }}
+        <div class="alert alert-success mt-0 mx-auto">
+            <strong>Success!</strong> {{ .Msg }}
+        </div>
+        {{ end }}
+    </div>
+    {{ end }}
+    <div class="row">
+        <div class="col-md-4 col-sm-4 col-xs-12"></div> 
+        <div class="col-md-4 col-sm-4 col-xs-12"> 
+            <form class="form-container" method="POST">
+                <h2><em>Find your bud here!</em></h2>
+                <div class="form-group">
+                    <label for="budid">Bud's ID</label>
+                    <input type="text" class="form-control" id="budid" name="budid" placeholder="Bud ID">
+                </div>
+                <div class="form-group">
+                    <label for="nickname">Bud's Nickname</label>
+                    <input type="text" class="form-control" id="nickname" name="nickname" placeholder="Nickname">
+                </div>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <button type="submit" class="btn btn-success btn-block" id="save" name="save" value="savetodb">Save</button>
+                    </div>
+                    <div class="col-lg-6">
+                        <button type="submit" class="btn btn-success btn-block" id="back" name="back">Back</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-4 col-sm-4 col-xs-12"></div> 
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+         <title>Bootstrap Example</title>
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	     <style>  
+            
+           body{
+				    background-image: url("public/images/cream.png");
+			    }
+	       			  
+	        .container  {
+					     justify-content: center;
+                         align-items: center;
+					     position: absolute;
+					     top: 40%;
+					     left:190px;
+                        }
+			
+		  
+            .btn-space {
+                         margin-right: 40px;
+                       }
+             .btn {
+					background-color: #4CAF50;
+					color: white;
+					padding: 14px 20px;
+					border: none;
+					cursor: pointer;
+					width: 30%;
+ 
+				  }
+            .modal-header, h4, .close {
+										background-color: #5cb85c;
+										color:white ;
+										text-align: center;
+										font-size: 30px;
+										}
+			 .modal-header1,h3,.close {
+										background-color: #B22222;
+										color:white ;
+										text-align: center;
+										font-size: 30px;
+										}
+			
+			.modal-footer {
+							background-color: #f9f9f9;
+						  }
+						  
+				  
+    </style>
+    </head>
+    <body>
+         <div class="container">
+	        <div class="col-md-10 text-center">
+      
+	             <a href="demo.html" class=" btn btn-default btn-space" role="button">Create new keys </a><br><br>
+		         <img src="public/images/or.png" class="img-circle" alt="Cinque Terre" width="30" height="30"> 
+				 
+                 <!-- Trigger the modal with a button -->
+		         <br><br>
+                 <button type="button" class="btn btn-default btn-space" data-toggle="modal" data-target="#Modaluploadpage">Import existing keys</button>
+	  
+		         <!---- uodate error button Popup --->
+                 <div class="modal fade" id="Modalupdateerror" role="dialog">
+                    <div class="modal-dialog">
+		 
+                        <!-- Modal content-->
+                         <div class="modal-content">
+                             <div class="modal-header1">
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                <h3 class="modal-title">Error</h3>
+                            </div>
+                        <div class="modal-body">
+                        <p>Wrong key...!!</p>
+                        </div>
+                        </div>
+				 
+                    </div>
+               </div>
+            
+			
+			    <!---- uodate success button Popup --->
+                 <div class="modal fade" id="Modalupdatesuccess" role="dialog">
+                    <div class="modal-dialog">
+		 
+                        <!-- Modal content-->
+                         <div class="modal-content">
+                             <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                <h4 class="modal-title">Success</h4>
+                            </div>
+                        <div class="modal-body">
+                        <p>Key generated successfully..!!</p>
+                        </div>
+                        </div>
+				 
+                    </div>
+               </div>
+    <!---- upload page Popup --->
+    <div class="modal fade" id="Modaluploadpage" role="dialog">
+        <div class="modal-dialog">
+             <!-- Modal content-->
+             <div class="modal-content">
+                <div class="modal-content">
+                     <div class="modal-body" style="padding:90px 50px;">
+                         <form method="POST">
+				                <!-- Public key creation-->
+                                <p><strong>PUBLIC KEY:</strong> </p>
+				                <input type="file" id="pubKey">
+                                <script>
+						             function myFunction() {
+						             var x = document.getElementById("myFile");
+						             x.disabled = true;
+						         }
+						        </script>
+						        <br><br>	
+					             <!-- Private key creation-->
+                                 <p><strong>PRIVATE KEY:</strong></p>
+					             <input type="file" id="prvKey">
+                                <script>
+						             function myFunction() {
+						             var x = document.getElementById("myFile");
+						             x.disabled = true;
+						            }
+						        </script>
+                    
+                         </form>
+                     </div>
+                    <div class="modal-footer">
+                         <button type="submit" class="btn  btn-default pull-left " data-dismiss="modal"> Cancel</button>
+                         <a href="#" data-dismiss="modal" data-toggle="modal" id="up" data-target="#Modalupdateerror" class=" btn btn-default btn-space" role="button"><span class="glyphicon glyphicon-upload"></span> Upload1</a>
+						 
+						  <a href="#" data-dismiss="modal" data-toggle="modal" id="up" data-target="#Modalupdatesuccess" class=" btn btn-default btn-space" role="button"><span class="glyphicon glyphicon-upload"></span> Upload2</a>
+				  
+				  
+                    </div>
+                 </div>
+		    </div>
+	     </div>
+	 </div>
+     
+	 <script>
+		$(document).ready(function(){
+			$("#importBtn").click(function(){
+				$("#uploadModal").modal();
+			});
+		});
+    </script>
+
+   </body>
+</html>
