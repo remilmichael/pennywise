@@ -26,7 +26,7 @@
                          margin-right: 40px;
                        }
              .btn {
-					background-color: #4CAF50;
+					background-color: #3CB371;
 					color: white;
 					padding: 14px 20px;
 					border: none;
@@ -35,7 +35,7 @@
  
 				  }
             .modal-header, h4, .close {
-										background-color: #5cb85c;
+										background-color: #3CB371;
 										color:white ;
 										text-align: center;
 										font-size: 30px;
@@ -65,7 +65,7 @@
 		         <br><br>
                  <button type="button" class="btn btn-default btn-space" data-toggle="modal" data-target="#Modaluploadpage">Import existing keys</button>
 	  
-		         <!---- uodate error button Popup --->
+		         <!---- upload error button Popup --->
                  <div class="modal fade" id="Modalupdateerror" role="dialog">
                     <div class="modal-dialog">
 		 
@@ -84,7 +84,7 @@
                </div>
             
 			
-			    <!---- uodate success button Popup --->
+			    <!---- upload success button Popup --->
                  <div class="modal fade" id="Modalupdatesuccess" role="dialog">
                     <div class="modal-dialog">
 		 
@@ -110,7 +110,7 @@
                      <div class="modal-body" style="padding:90px 50px;">
                          <form method="POST">
 				                <!-- Public key creation-->
-                                <p><strong>PUBLIC KEY:</strong> </p>
+                                <p class="text-left"><strong>PUBLIC KEY:</strong> </p>
 				                <input type="file" id="pubKey">
                                 <script>
 						             function myFunction() {
@@ -120,7 +120,7 @@
 						        </script>
 						        <br><br>	
 					             <!-- Private key creation-->
-                                 <p><strong>PRIVATE KEY:</strong></p>
+                                 <p class="text-left"><strong>PRIVATE KEY:</strong></p>
 					             <input type="file" id="prvKey">
                                 <script>
 						             function myFunction() {
