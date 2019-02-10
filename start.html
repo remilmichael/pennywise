@@ -1,110 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
-   <head>
-         <title>Credentials</title>
-         <meta charset="utf-8">
-         <meta name="viewport" content="width=device-width, initial-scale=1">
-         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-         <link rel="stylesheet" href="public/css/start.css">
-         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-	     </head>
-    <body>
-         <div class="container center-block">
-	        <div class="col-md-10 col-lg-10 text-center">
-                <button type="button" class=" btn btn-default btn-space" role="button">Create new keys </button><br><br>
-		         <img src="public/images/or.png" class="img-circle" alt="Cinque Terre" width="30" height="30"> 
-				 
-                 <!-- Trigger the modal with a button -->
-		         <br><br>
-                 <button type="button" class="btn btn-default btn-space" data-toggle="modal" data-target="#Modaluploadpage">Import existing keys</button>
-	  
-		         <!---- upload error button Popup --->
-                 <div class="modal fade" id="Modalupdateerror" role="dialog">
-                    <div class="modal-dialog">
-		 
-                        <!-- Modal content-->
-                         <div class="modal-content">
-                             <div class="modal-header1">
-                                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                                <h3 class="modal-title">Error</h3>
-                            </div>
-                        <div class="modal-body">
-                        <p>Wrong key...!!</p>
-                        </div>
-                        </div>
-				 
-                    </div>
-               </div>
-            
-			
-			    <!---- upload success button Popup --->
-                 <div class="modal fade" id="Modalupdatesuccess" role="dialog">
-                    <div class="modal-dialog">
-		 
-                        <!-- Modal content-->
-                         <div class="modal-content">
-                             <div class="modal-header">
-                                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                                <h4 class="modal-title">Success</h4>
-                            </div>
-                        <div class="modal-body">
-                        <p>Key generated successfully..!!</p>
-                        </div>
-                        </div>
-				 
-                    </div>
-               </div>
-    <!---- upload page Popup --->
-    <div class="modal fade" id="Modaluploadpage" role="dialog">
+<head>
+	<title>Credentials</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    <link href="public/css/start.css" type="text/css" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+</head>
+<body>
+    {{ if .Action }}
+    <div class="row">
+        {{ if .Success }}
+        <div class="alert alert-success mt-0">
+            <strong>Success!</strong> {{ .Msg }}
+        </div>
+        {{ end }}
+        {{ if .Error }}
+        <div class="alert alert-danger mt-0">
+            <strong>Error!</strong> {{ .Msg }}
+        </div>
+        {{ end }}
+    </div>
+    {{ end }}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-4 col-sm-4 col-xs-12"></div> 
+        <div class="col-md-4 col-sm-4 col-xs-12"> 
+            <div class="create">
+                <form method="POST">
+                    <button type="submit" id="create" name="create" value="genkey" class="btn btn-success btn-lg" style="width: 250px;">Create New Keys</button>
+                </form>
+            </div>
+            <div class="import">
+                <button class="btn btn-primary btn-lg" style="width: 250px;" data-toggle="modal" data-target="#uploadModal">Import existing keys</button>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-4 col-xs-12"></div>  
+    </div>
+    <div id="uploadModal" class="modal fade" role="dialog">
         <div class="modal-dialog">
-             <!-- Modal content-->
-             <div class="modal-content">
+            <form enctype="multipart/form-data" method="POST">
                 <div class="modal-content">
-                     <div class="modal-body" style="padding:90px 50px;">
-                         <form method="POST">
-				                <!-- Public key creation-->
-                                <p class="text-left"><strong>PUBLIC KEY:</strong> </p>
-				                <input type="file" id="pubKey">
-                                <script>
-						             function myFunction() {
-						             var x = document.getElementById("myFile");
-						             x.disabled = true;
-						         }
-						        </script>
-						        <br><br>	
-					             <!-- Private key creation-->
-                                 <p class="text-left"><strong>PRIVATE KEY:</strong></p>
-					             <input type="file" id="prvKey">
-                                <script>
-						             function myFunction() {
-						             var x = document.getElementById("myFile");
-						             x.disabled = true;
-						            }
-						        </script>
-                    
-                         </form>
-                     </div>
-                    <div class="modal-footer">
-                         <button type="submit" class="btn  btn-default pull-left " data-dismiss="modal"> Cancel</button>
-                         <a href="#" data-dismiss="modal" data-toggle="modal" id="up" data-target="#Modalupdateerror" class=" btn btn-default btn-space" role="button"><span class="glyphicon glyphicon-upload"></span> Upload1</a>
-						 
-						  <a href="#" data-dismiss="modal" data-toggle="modal" id="up" data-target="#Modalupdatesuccess" class=" btn btn-default btn-space" role="button"><span class="glyphicon glyphicon-upload"></span> Upload2</a>
-				  
-				  
-                    </div>
-                 </div>
-		    </div>
-	     </div>
-	 </div>
-     
-	 <script>
-		$(document).ready(function(){
-			$("#importBtn").click(function(){
-				$("#uploadModal").modal();
-			});
-		});
-    </script>
-
-   </body>
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title text-left">Select files</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p class="text-left mdbody"><strong>PUBLIC KEY:</strong> </p>
+                            <input type="file" id="pubKey" name="pubKey">
+                            <br>
+                            <p class="text-left mdbody"><strong>PRIVATE KEY:</strong></p>
+					        <input type="file" id="prvKey" name="prvKey">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" name="import" id="import" value="impkey" class="btn btn-default">Upload</button>
+                        </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
 </html>

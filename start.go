@@ -45,28 +45,28 @@ func start(w http.ResponseWriter, r *http.Request) {
 		if r.FormValue("create") == "genkey" {
 			genSuccess = genKeys()
 			if genSuccess {
-				flushStartPage(w, true, false, "Keys generated")
+				flushStartPage(w, true, true, false, "Keys generated")
 			} else {
-				flushStartPage(w, false, true, "Key generation failed")
+				flushStartPage(w, true, false, true, "Key generation failed")
 			}
 		} else if r.FormValue("import") == "impkey" {
 			pubKeySuccess := false
 			privKeySuccess := false
-			file, _, err := r.FormFile("pubkey")
+			file, _, err := r.FormFile("pubKey")
 			if err != nil {
-				flushStartPage(w, false, true, "Invalid public key")
+				flushStartPage(w, true, false, true, "Invalid public key")
 			} else {
 				defer file.Close()
 				fileBytes, err := ioutil.ReadAll(file)
 				if err != nil {
-					flushStartPage(w, false, true, "Invalid public key")
+					flushStartPage(w, true, false, true, "Invalid public key")
 				} else {
 					newFile, err := os.Create("pubKey.pem")
 					if err != nil {
-						flushStartPage(w, false, true, "Error copying file")
+						flushStartPage(w, true, false, true, "Error copying file")
 					} else {
 						if _, err := newFile.Write(fileBytes); err != nil {
-							flushStartPage(w, false, true, "Error copying file")
+							flushStartPage(w, true, false, true, "Error copying file")
 						} else {
 							pubKeySuccess = true
 						}
@@ -74,21 +74,21 @@ func start(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			if pubKeySuccess {
-				file, _, err = r.FormFile("privkey")
+				file, _, err = r.FormFile("prvKey")
 				if err != nil {
-					flushStartPage(w, false, true, "Invalid private key")
+					flushStartPage(w, true, false, true, "Invalid private key")
 				} else {
 					defer file.Close()
 					fileBytes, err := ioutil.ReadAll(file)
 					if err != nil {
-						flushStartPage(w, false, true, "Invalid private key")
+						flushStartPage(w, true, false, true, "Invalid private key")
 					} else {
 						newFile, err := os.Create("prvKey.pem")
 						if err != nil {
-							flushStartPage(w, false, true, "Error copying file")
+							flushStartPage(w, true, false, true, "Error copying file")
 						} else {
 							if _, err := newFile.Write(fileBytes); err != nil {
-								flushStartPage(w, false, true, "Error copying file")
+								flushStartPage(w, true, false, true, "Error copying file")
 							} else {
 								privKeySuccess = true
 							}
@@ -97,11 +97,11 @@ func start(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			if pubKeySuccess && privKeySuccess {
-				flushStartPage(w, true, false, "Key import successful")
+				flushStartPage(w, true, true, false, "Key import successful")
 			}
 		}
 	} else {
-		flushStartPage(w, false, false, "")
+		flushStartPage(w, false, false, false, "")
 	}
 }
 
@@ -129,8 +129,9 @@ func checkError(err error) {
 	}
 }
 
-func flushStartPage(w http.ResponseWriter, e bool, act bool, msg string) {
+func flushStartPage(w http.ResponseWriter, act bool, s bool, e bool, msg string) {
 	startOut.Action = act
+	startOut.Success = s
 	startOut.Error = e
 	startOut.Msg = msg
 	startTmpl.Execute(w, startOut)

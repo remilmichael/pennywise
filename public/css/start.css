@@ -1,44 +1,40 @@
+*{
+    color:blue
+}
 body{
-    background-image: url("../images/cream.png");
+    text-align: center;
+}
+.bg{
+    background: red  no-repeat; width: 100%; height:100vh;
+}
+.form-container{
+    border:0px solid; padding:50px 60px; margin-top:20vh;
+    -webkit-box-shadow: -1px 6px 32px 8px rgba(0,0,0,0.75);
+    -moz-box-shadow: -1px 6px 32px 8px rgba(233, 104, 104, 0.75);
+    box-shadow: -1px 6px 32px 8px rgba(0,0,0,0.75);
+}
+.create{
+    margin-top: 50%;
+    padding:10%;
+}
+.import{
+    padding:10%;
 }
 
-.container  {
-    justify-content: center;
-    align-items: center;
-    position: absolute;
-    top: 40%;
-    left:190px;
-}
-
-.btn-space {
-    margin-right: 40px;
-}
-             
-.btn {
-    background-color: #3CB371;
+.modal-header {
+    background-color: green;
     color: white;
-    padding: 14px 20px;
-    border: none;
-	cursor: pointer;
-	width: 30%;
 }
 
-.modal-header, h4, .close {
-    background-color: #3CB371;
-    color:white ;
-    text-align: center;
-    font-size: 30px;
+.modal-body, .mdbody {
+    color: cadetblue;
 }
 
-.modal-header1,h3,.close {
-    background-color: #B22222;
-    color:white ;
-    text-align: center;
-    font-size: 30px;
+.mt-0 {
+    margin-top: 10px !important;
 }
 
-.modal-footer {
-    background-color: #f9f9f9;
+.alert {
+    margin-left: 30%;
+    width: 40%;
 }
-						  
-				  
