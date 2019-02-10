@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/gob"
-	"fmt"
 	"html/template"
 	"net/http"
 
@@ -19,7 +18,7 @@ var out output
 var addFrdTmpl *template.Template
 
 func addfriend(w http.ResponseWriter, r *http.Request) {
-	var bucketName = "buddies"
+	var bucketName = []byte("buddies")
 	var err error
 	var nickName string
 	var budID string
@@ -54,35 +53,28 @@ func addfriend(w http.ResponseWriter, r *http.Request) {
 			byt, err := gobEncodeFrnd(*frd)
 			_ = byt
 			if err == nil {
-				replace := false
-				replaceVal := ""
+				//replace := false
+				//replaceVal := ""
 				err = boltOpen()
 				if err != nil {
 					panic(err)
 				}
 				defer boltClose()
-				rbyt, err := boltSelect(bucketName, budID)
-				_ = rbyt
+				val, err := boltBudSearch(bucketName, budID, nickName)
 				if err != nil {
 					panic(err)
 				}
-				if len(rbyt) > 0 {
-					da, err := gobDecodeFrnd(rbyt)
+				if val == 0 {
+					err = boltInsert(bucketName, frd.ID, byt)
 					if err != nil {
-						panic(err)
-					}
-					replace = true
-					replaceVal = da.NickName
-				}
-				err = boltInsert(bucketName, frd.ID, byt)
-				if err != nil {
-					flushAddFrdPage(w, true, true, false, "Error saving data")
-				} else {
-					if replace {
-						flushAddFrdPage(w, true, false, true, fmt.Sprintf("Buddy name replaced : %s with %s", replaceVal, nickName))
+						flushAddFrdPage(w, true, true, false, "Error saving data")
 					} else {
 						flushAddFrdPage(w, true, false, true, "Buddy added")
 					}
+				} else if val == 1 {
+					flushAddFrdPage(w, true, true, false, "ID already exists with some other nickname.")
+				} else {
+					flushAddFrdPage(w, true, true, false, "Nickname or ID already taken")
 				}
 			} else {
 				flushAddFrdPage(w, true, true, false, "Error saving data")
