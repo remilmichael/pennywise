@@ -23,6 +23,7 @@ var startOut output
 var startTmpl *template.Template
 
 func main() {
+	hostRunning = false
 	r := mux.NewRouter()
 	r.HandleFunc("/start", start)
 	r.HandleFunc("/add", addfriend)

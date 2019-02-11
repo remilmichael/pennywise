@@ -11,5 +11,15 @@
             });
         </script>
         {{ end }}
+        {{ if .Error }}
+        <script>
+            $(function() {
+                $( "#errDialog" ).dialog();
+            });
+        </script>
+        <div id="dialog" title="Error">
+            <p>{{ .Msg }}. Reload page to try again.</p>
+        </div>
+        {{ end }}
     </body>
 </html>
