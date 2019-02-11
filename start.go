@@ -26,6 +26,7 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/start", start)
 	r.HandleFunc("/add", addfriend)
+	r.HandleFunc("/boot", bootstrap)
 	r.PathPrefix("/public/").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
 	srv := &http.Server{
 		Handler:      r,
@@ -38,7 +39,7 @@ func main() {
 
 func start(w http.ResponseWriter, r *http.Request) {
 	var err error
-	startTmpl, err = template.ParseFiles("start.html")
+	startTmpl, err = template.ParseFiles("html/start.html")
 	checkError(err)
 	genSuccess := false
 	if r.Method == http.MethodPost {

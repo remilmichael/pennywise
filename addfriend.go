@@ -25,7 +25,7 @@ func addfriend(w http.ResponseWriter, r *http.Request) {
 	//var pid peer.ID
 	idOkay := false
 	nameOkay := false
-	addFrdTmpl, err = template.ParseFiles("addfriend.html")
+	addFrdTmpl, err = template.ParseFiles("html/addfriend.html")
 	checkError(err)
 	if r.Method == http.MethodPost {
 		if r.FormValue("save") == "savetodb" {
