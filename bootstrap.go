@@ -76,6 +76,7 @@ func bootstrap(w http.ResponseWriter, r *http.Request) {
 				out.Msg = "Unable to boot host"
 				tmpl.Execute(w, out)
 			} else {
+				//fmt.Println(thisHost.ID().Pretty())
 				dhtClient = dht.NewDHTClient(ctx, thisHost, datastore.NewMapDatastore())
 				bootAddr, _ := ipfsaddr.ParseString(bootStrapPeer)
 				bootInfo, _ := peerstore.InfoFromP2pAddr(bootAddr.Multiaddr())

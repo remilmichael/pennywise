@@ -22,7 +22,7 @@ func ajaxreq(w http.ResponseWriter, r *http.Request) {
 		if data == "1" {
 			dat, err := boltReturnAll([]byte("buddies"))
 			checkError(err)
-			if len(dat) > 1 {
+			if len(dat) > 0 {
 				resp := struct {
 					Empty bool     `json:"Empty"`
 					Data  []string `json:"Data"`
@@ -59,8 +59,10 @@ func ajaxreq(w http.ResponseWriter, r *http.Request) {
 					w.Write([]byte("Request already exists in queue."))
 				} else {
 					err = queueInsert(queueName, buf.Bytes())
-					if err != nil {
+					if err == nil {
 						w.Write([]byte("Request pushed into the queue."))
+					} else {
+						w.Write([]byte("Critical error"))
 					}
 				}
 			} else {

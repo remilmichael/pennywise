@@ -38,6 +38,7 @@ func sendReq() {
 						buf := bytes.NewBuffer(v)
 						dec := gob.NewDecoder(buf)
 						err = dec.Decode(&frq)
+						fmt.Println(frq)
 						checkError(err)
 						go func(key []byte, frq FrReqInd) {
 							directlyConnected := false
