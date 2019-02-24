@@ -123,6 +123,9 @@ func bootstrap(w http.ResponseWriter, r *http.Request) {
 							}
 						}
 					}()
+					if hostRunning {
+						go sendReq()
+					}
 				}
 			}
 		}

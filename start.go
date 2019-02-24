@@ -23,11 +23,14 @@ var startOut output
 var startTmpl *template.Template
 
 func main() {
+	houseKeeping(1)
 	hostRunning = false
 	r := mux.NewRouter()
 	r.HandleFunc("/start", start)
 	r.HandleFunc("/add", addfriend)
 	r.HandleFunc("/boot", bootstrap)
+	r.HandleFunc("/request", request)
+	r.HandleFunc("/ajaxreq", ajaxreq)
 	r.PathPrefix("/public/").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
 	srv := &http.Server{
 		Handler:      r,
@@ -127,7 +130,7 @@ func genKeys() bool {
 
 func checkError(err error) {
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 }
 
@@ -137,4 +140,15 @@ func flushStartPage(w http.ResponseWriter, act bool, s bool, e bool, msg string)
 	startOut.Error = e
 	startOut.Msg = msg
 	startTmpl.Execute(w, startOut)
+}
+
+func houseKeeping(state int8) {
+	var err error
+	if state == 1 {
+		err = boltOpen()
+		if err != nil {
+			checkError(err)
+		}
+		queueName = []byte("sentqueue")
+	}
 }

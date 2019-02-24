@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Friend request</title>
+        <meta charset="utf-8">
+        <script
+			  src="https://code.jquery.com/jquery-3.3.1.min.js"
+			  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+			  crossorigin="anonymous">
+        </script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+        <script src="../public/js/frq.js"></script>
+    </head>
+    <body>
+        <button type="button" class="btn btn-primary" name="download" id="download">Download data</button>
+        <div id="data">
+            <form method="POST" name="search" id="search">
+                <select class="selectpicker" name="pick" id="pick" data-live-search="true">
+                </select>
+                <br>
+                <button name="send" type="submit" id="send" class="btn btn-success" value="submit">Send request</button>
+            </form>
+            <p id="message"></p>
+        </div>
+    </body>
+</html>
