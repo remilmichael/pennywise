@@ -9,6 +9,7 @@ import (
 	"time"
 
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
+	swarm "github.com/libp2p/go-libp2p-swarm"
 	multihash "github.com/multiformats/go-multihash"
 
 	cid "github.com/ipfs/go-cid"
@@ -18,6 +19,7 @@ import (
 
 	libp2p "github.com/libp2p/go-libp2p"
 
+	circuit "github.com/libp2p/go-libp2p-circuit"
 	crypto "github.com/libp2p/go-libp2p-crypto"
 	host "github.com/libp2p/go-libp2p-host"
 )
@@ -70,6 +72,7 @@ func bootstrap(w http.ResponseWriter, r *http.Request) {
 				libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/4001", "/ip6/::/tcp/4001"),
 				libp2p.Identity(prvKey),
 				libp2p.NATPortMap(),
+				libp2p.EnableRelay(circuit.OptDiscovery, circuit.OptHop),
 			)
 			if err != nil {
 				out.Error = true
@@ -89,6 +92,7 @@ func bootstrap(w http.ResponseWriter, r *http.Request) {
 							break
 						}
 						if err = thisHost.Connect(ctx, *bootInfo); err != nil {
+							thisHost.Network().(*swarm.Swarm).Backoff().Clear(bootInfo.ID)
 							time.Sleep(time.Second * 5)
 						} else {
 							outChan <- true

@@ -6,7 +6,7 @@ type Flags struct {
 }
 
 type FrReqInd struct {
-	flag   Flags
 	HostID string
 	PeerID string
+	Flags
 }

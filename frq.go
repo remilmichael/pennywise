@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"net/http"
 )
@@ -47,10 +48,15 @@ func ajaxreq(w http.ResponseWriter, r *http.Request) {
 			if thisHost != nil && hostRunning {
 				ID, err := returnIDByName([]byte("buddies"), data)
 				checkError(err)
-				var frq FrReqInd
-				frq.flag.FrdReq = true
-				frq.HostID = thisHost.ID().Pretty()
-				frq.PeerID = ID
+				frq := &FrReqInd{
+					HostID: thisHost.ID().Pretty(),
+					PeerID: ID,
+					Flags: Flags{
+						FrdAck: false,
+						FrdReq: true,
+					},
+				}
+				fmt.Println(frq)
 				var buf bytes.Buffer
 				enc := gob.NewEncoder(&buf)
 				err = enc.Encode(frq)
