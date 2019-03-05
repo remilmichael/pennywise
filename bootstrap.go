@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -51,7 +52,7 @@ func bootstrap(w http.ResponseWriter, r *http.Request) {
 		fileFound := true
 		file, err := os.Open(sKeyName)
 		if err != nil {
-			if err.Error() == "open prvKey.pem: no such file or directory" {
+			if err.Error() == "open "+sKeyName+": no such file or directory" {
 				fileFound = false
 			}
 		}
@@ -79,7 +80,7 @@ func bootstrap(w http.ResponseWriter, r *http.Request) {
 				out.Msg = "Unable to boot host"
 				tmpl.Execute(w, out)
 			} else {
-				//fmt.Println(thisHost.ID().Pretty())
+				fmt.Println(thisHost.ID().Pretty())
 				dhtClient = dht.NewDHTClient(ctx, thisHost, datastore.NewMapDatastore())
 				bootAddr, _ := ipfsaddr.ParseString(bootStrapPeer)
 				bootInfo, _ := peerstore.InfoFromP2pAddr(bootAddr.Multiaddr())
@@ -95,6 +96,7 @@ func bootstrap(w http.ResponseWriter, r *http.Request) {
 							thisHost.Network().(*swarm.Swarm).Backoff().Clear(bootInfo.ID)
 							time.Sleep(time.Second * 5)
 						} else {
+							thisHost.SetStreamHandler("/cats", handleStream)
 							outChan <- true
 							break
 						}
@@ -119,21 +121,30 @@ func bootstrap(w http.ResponseWriter, r *http.Request) {
 					_ = ctxCancel
 
 					//Announcing
-					go func() {
-						for {
-							if err = dhtClient.Provide(tctx, contID, true); err != nil {
-								time.Sleep(time.Second * 3)
-							} else {
-								break
-							}
+					//go func() {
+					for {
+						if err = dhtClient.Provide(tctx, contID, true); err != nil {
+							time.Sleep(time.Second * 3)
+						} else {
+							break
 						}
-					}()
+					}
+					//}()
 					if hostRunning {
-						go sendReq()
+						go func() {
+							for {
+								sendReq()
+							}
+						}()
+						/*go func() {
+							for {
+								fmt.Println(thisHost.Network().Peers())
+								time.Sleep(time.Second * 5)
+							}
+						}()*/
 					}
 				}
 			}
 		}
 	}
-
 }
