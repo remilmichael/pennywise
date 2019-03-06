@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"net/http"
 )
@@ -56,7 +55,6 @@ func ajaxreq(w http.ResponseWriter, r *http.Request) {
 						FrdReq: true,
 					},
 				}
-				fmt.Println(frq)
 				var buf bytes.Buffer
 				enc := gob.NewEncoder(&buf)
 				err = enc.Encode(frq)

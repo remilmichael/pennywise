@@ -31,20 +31,14 @@ func readData(s net.Stream, rw *bufio.ReadWriter) {
 				log.Println(err)
 			}
 		} else {
-			var rcvd FrReqInd
-			if err := json.Unmarshal([]byte(str), &rcvd); err != nil {
-				checkError(err)
-			}
-			fmt.Println(rcvd)
+			go processData(str)
 		}
 		time.Sleep(time.Second * 1)
 	}
 }
 
-func writeData(rw *bufio.ReadWriter, s net.Stream, pid peer.ID, frq FrReqInd, key []byte) {
-	bytes, err := json.Marshal(frq)
-	checkError(err)
-	_, err = rw.WriteString(fmt.Sprintf("%s\n", string(bytes)))
+func writeData(rw *bufio.ReadWriter, s net.Stream, pid peer.ID, bytes []byte, key []byte) {
+	_, err := rw.WriteString(fmt.Sprintf("%s\n", string(bytes)))
 	if err != nil {
 		if err.Error() == "stream reset" {
 			s.Close()
@@ -62,7 +56,8 @@ func writeData(rw *bufio.ReadWriter, s net.Stream, pid peer.ID, frq FrReqInd, ke
 }
 
 func sendReq() {
-	var frq FrReqInd
+	var pid peer.ID
+	var byteData []byte
 	ctx := context.Background()
 	err := db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(queueName)
@@ -72,15 +67,30 @@ func sendReq() {
 		c := b.Cursor()
 		for {
 			for key, v := c.First(); key != nil; key, v = c.Next() {
+				var recv Receive
 				buf := bytes.NewBuffer(v)
 				dec := gob.NewDecoder(buf)
-				err := dec.Decode(&frq)
-				pid, err := peer.IDB58Decode(frq.PeerID)
-				checkError(err)
+				err := dec.Decode(&recv)
+				if recv.FrdReq == true {
+					var frq FrReqInd
+					err = dec.Decode(&frq)
+					pid, err = peer.IDB58Decode(frq.PeerID)
+					checkError(err)
+					byteData, err = json.Marshal(frq)
+					checkError(err)
+				} else if recv.FrdAck == true {
+					var frq FrReqInd
+					err = dec.Decode(&frq)
+					buf = bytes.NewBuffer(v)
+					pid, err = peer.IDB58Decode(frq.HostID)
+					checkError(err)
+					byteData, err = json.Marshal(frq)
+					checkError(err)
+				}
 				tctx, _ := context.WithTimeout(ctx, time.Second*10)
 				pr, err := dhtClient.FindPeer(tctx, pid)
 				if err != nil {
-
+					//ignore
 				} else {
 					if err = thisHost.Connect(tctx, pr); err != nil {
 						thisHost.Network().(*swarm.Swarm).Backoff().Clear(pr.ID)
@@ -91,7 +101,7 @@ func sendReq() {
 							continue
 						}
 						rw := bufio.NewReadWriter(bufio.NewReader(s), bufio.NewWriter(s))
-						writeData(rw, s, pid, frq, key)
+						writeData(rw, s, pid, byteData, key)
 						s.Close()
 						thisHost.Network().ClosePeer(pid)
 					}

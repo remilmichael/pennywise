@@ -1,12 +1,18 @@
 package main
 
 type Flags struct {
-	FrdReq bool
-	FrdAck bool
+	FrdReq bool `json:"frdReq"`
+	FrdAck bool `json:"frdAck"`
 }
 
 type FrReqInd struct {
-	HostID string
-	PeerID string
-	Flags
+	Flags  `json:"flags"`
+	HostID string `json:"hostid"`
+	PeerID string `json:"peerid"`
 }
+
+type Receive struct {
+	Flags `json:"flags"`
+}
+
+var reqBkt []byte = []byte("frequest")
