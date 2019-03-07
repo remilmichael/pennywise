@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Friend Requests</title>
+        <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+        <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+        <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/select/1.2.7/css/select.dataTables.min.css">
+        <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.js"></script>
+        <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script> 
+        <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.js"></script>
+        <script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+        <script type="text/javascript" src="https://cdn.datatables.net/select/1.2.7/js/dataTables.select.min.js"></script>
+
+        
+    </head>
+    <body>
+        {{ if .Success }}
+        <table id="reqtable" class="table table-striped table-bordered" style="width:30%">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Host ID</th>
+                </tr>
+            </thead>
+            <tbody>
+                    {{ range $key, $value := .Data }}
+                    <tr>
+                        <td></td>
+                        <td>{{ $value }}</td>
+                    </tr>
+                    {{ end }}
+            </tbody>
+        </table>
+        <label for="accept">Nickname* : </label>
+        <input type="text" class="form-control-plaintext" id="nickname" name="nickname">
+        <br><br>
+        <button type="button" class="btn btn-success" name="accept" id="accept">Accept</button>
+        <button type="button" class="btn btn-danger" name="reject" id="reject">Reject</button>
+        {{ end }}
+        <p id="message"></p>
+        {{ if .Error }}
+        <div class="alert alert-danger" role="alert">
+                {{ .Data }}
+        </div>
+        {{ end }}
+    </body>
+    <script>
+        $(document).ready(function() {
+            var table = $('#reqtable').DataTable({
+                select: {
+                    style: 'single'
+                },
+            });
+            $('#accept').click(function(){
+                nickname = $("#nickname").val();
+                var dat=table.rows( { selected: true }).data();
+                var hostid = "";
+                $.each(dat, function(index, rowId){
+		            hostid = rowId;
+                });
+                hostid = hostid[1]
+                if (!nickname.trim()){
+                    alert('Nickname can\'t be empty');
+                } else {
+                    $.ajax({
+                    url: 'processreq',
+                    type: 'post',
+                    dataType: 'html',
+                    data: {accept: '1', reject: '0', id: hostid, name: nickname},
+                    success: function(data) {
+                        
+                    },
+                    error: function(error) {
+                        alert(error);
+                    }
+                });
+                }
+            });
+            $('#reject').click(function(){
+                $.ajax({
+                    url: 'processreq',
+                    type: 'post',
+                    dataType: 'html',
+                    data: {accept: '0', reject: '1'},
+                    success: function(data) {
+                        
+                    },
+                    error: function(error) {
+                        alert(error);
+                    }
+                });
+            });
+        });
+
+    </script>        
+</html>

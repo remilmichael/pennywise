@@ -31,6 +31,8 @@ func main() {
 	r.HandleFunc("/boot", bootstrap)
 	r.HandleFunc("/request", request)
 	r.HandleFunc("/ajaxreq", ajaxreq)
+	r.HandleFunc("/viewreq", viewreq)
+	r.HandleFunc("/processreq", processreq)
 	r.PathPrefix("/public/").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
 	srv := &http.Server{
 		Handler:      r,
@@ -149,6 +151,6 @@ func houseKeeping(state int8) {
 		if err != nil {
 			checkError(err)
 		}
-		queueName = []byte("sentqueue")
+
 	}
 }

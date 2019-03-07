@@ -19,7 +19,6 @@ var out output
 var addFrdTmpl *template.Template
 
 func addfriend(w http.ResponseWriter, r *http.Request) {
-	var bucketName = []byte("buddies")
 	var err error
 	var nickName string
 	var budID string
@@ -52,7 +51,6 @@ func addfriend(w http.ResponseWriter, r *http.Request) {
 				NickName: nickName,
 			}
 			byt, err := gobEncodeFrnd(*frd)
-			_ = byt
 			if err == nil {
 				//replace := false
 				//replaceVal := ""

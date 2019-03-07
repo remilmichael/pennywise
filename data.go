@@ -15,4 +15,8 @@ type Receive struct {
 	Flags `json:"flags"`
 }
 
-var reqBkt []byte = []byte("frequest")
+var reqBkt = []byte("frequest")
+var reqdump = []byte("frqdump")
+var friendsBkt = []byte("friends")
+var queueName = []byte("sentqueue")
+var bucketName = []byte("buddies")

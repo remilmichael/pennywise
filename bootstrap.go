@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -129,6 +130,7 @@ func bootstrap(w http.ResponseWriter, r *http.Request) {
 							break
 						}
 					}
+					log.Println("Bootstrapping successful.")
 					//}()
 					if hostRunning {
 						go func() {
