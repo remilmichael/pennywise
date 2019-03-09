@@ -34,4 +34,4 @@ var friendsBkt = []byte("friends")
 var queueName = []byte("sentqueue")
 
 //contacts
-var bucketName = []byte("buddies")
+var buddyBkt = []byte("buddies")

@@ -48,10 +48,10 @@ func addfriend(w http.ResponseWriter, r *http.Request) {
 			if err == nil {
 				//replace := false
 				//replaceVal := ""
-				val, _, err := boltBudSearch(bucketName, budID, nickName)
+				val, _, err := boltBudSearch(buddyBkt, budID, nickName)
 				checkError(err)
 				if val == 0 {
-					err = boltInsert(bucketName, frd.ID, byt)
+					err = boltInsert(buddyBkt, frd.ID, byt)
 					if err != nil {
 						flushAddFrdPage(w, true, true, false, "Error saving data")
 					} else {

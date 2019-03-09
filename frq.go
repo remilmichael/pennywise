@@ -23,7 +23,7 @@ func ajaxreq(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		data := r.FormValue("download")
 		if data == "1" {
-			dat, err := boltReturnAll(bucketName)
+			dat, err := boltReturnAll(buddyBkt)
 			checkError(err)
 			if len(dat) > 0 {
 				resp := struct {
