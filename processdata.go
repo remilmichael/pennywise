@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
-	"fmt"
 	"log"
 
 	"github.com/boltdb/bolt"
@@ -18,7 +17,7 @@ func processData(str string) {
 	if data.Flags.FrdReq {
 		saveFrdReq(str)
 	} else if data.Flags.FrdAck {
-		fmt.Println("passed")
+		//to be continued
 	}
 }
 

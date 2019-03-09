@@ -69,6 +69,9 @@
                     data: {accept: '1', reject: '0', id: hostid, name: nickname},
                     success: function(data) {
                         $('#message').text(data)
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 2000);
                     },
                     error: function(error) {
                         alert(error);
@@ -77,13 +80,22 @@
                 }
             });
             $('#reject').click(function(){
+                var dat=table.rows( { selected: true }).data();
+                var hostid = "";
+                $.each(dat, function(index, rowId){
+		            hostid = rowId;
+                });
+                hostid = hostid[1]
                 $.ajax({
                     url: 'processreq',
                     type: 'post',
                     dataType: 'html',
-                    data: {accept: '0', reject: '1'},
+                    data: {accept: '0', reject: '1', id: hostid},
                     success: function(data) {
-                        
+                        $('#message').text(data)
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 2000);
                     },
                     error: function(error) {
                         alert(error);

@@ -48,7 +48,7 @@ func addfriend(w http.ResponseWriter, r *http.Request) {
 			if err == nil {
 				//replace := false
 				//replaceVal := ""
-				val, err := boltBudSearch(bucketName, budID, nickName)
+				val, _, err := boltBudSearch(bucketName, budID, nickName)
 				checkError(err)
 				if val == 0 {
 					err = boltInsert(bucketName, frd.ID, byt)

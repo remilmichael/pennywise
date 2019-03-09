@@ -80,9 +80,10 @@ func boltSelect(bkt []byte, key string) ([]byte, error) {
 	return res, nil
 }
 
-func boltBudSearch(bkt []byte, id string, name string) (int8, error) {
+func boltBudSearch(bkt []byte, id string, name string) (int8, []byte, error) {
 	var err error
 	var ret int8
+	var key []byte
 	ret = 0
 	err = db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(bkt)
@@ -106,12 +107,13 @@ func boltBudSearch(bkt []byte, id string, name string) (int8, error) {
 				ret = ret + 2
 			}
 			if found {
+				key = k
 				break
 			}
 		}
 		return nil
 	})
-	return ret, err
+	return ret, key, err
 }
 
 func boltReturnAll(bkt []byte) ([]string, error) {

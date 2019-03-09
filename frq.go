@@ -5,8 +5,8 @@ import (
 	"encoding/binary"
 	"encoding/gob"
 	"encoding/json"
-	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 
 	"github.com/boltdb/bolt"
@@ -96,6 +96,7 @@ func viewreq(w http.ResponseWriter, r *http.Request) {
 			}
 			return err
 		})
+		checkError(err)
 		if err != nil {
 			resp := struct {
 				Error   bool
@@ -143,7 +144,7 @@ func processreq(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		accept := r.FormValue("accept")
 		reject := r.FormValue("reject")
-		data := r.FormValue("id")
+		hid := r.FormValue("id")
 		nickname := r.FormValue("nickname")
 
 		if accept == "1" {
@@ -151,24 +152,24 @@ func processreq(w http.ResponseWriter, r *http.Request) {
 			frq.FrdReq = false
 			frq.FrdAck = true
 			frq.HostID = thisHost.ID().Pretty()
-			frq.PeerID = data
+			frq.PeerID = hid
 			var buf bytes.Buffer
 			enc := gob.NewEncoder(&buf)
 			err = enc.Encode(frq)
 
-			_, err = peer.IDB58Decode(data)
+			_, err = peer.IDB58Decode(hid)
 			if err != nil {
 				w.Write([]byte("Invalid ID"))
 
 			} else {
 				frd := &Friend{
-					ID:       data,
+					ID:       hid,
 					NickName: nickname,
 				}
 
 				byt, err := gobEncodeFrnd(*frd)
 				checkError(err)
-				val, err := boltBudSearch(friendsBkt, frd.ID, frd.NickName)
+				val, key, err := boltBudSearch(friendsBkt, frd.ID, frd.NickName)
 				checkError(err)
 				if val == 1 {
 					w.Write([]byte("Friend already exists with the ID"))
@@ -177,7 +178,6 @@ func processreq(w http.ResponseWriter, r *http.Request) {
 				} else if val > 2 {
 					w.Write([]byte("Can't add same friend twice"))
 				} else if val == 0 {
-					fmt.Println(frd)
 					err = boltInsert(friendsBkt, frd.ID, byt)
 					checkError(err)
 					//pushing to send queue
@@ -194,31 +194,42 @@ func processreq(w http.ResponseWriter, r *http.Request) {
 						return err
 					})
 					checkError(err)
+					if err = db.Update(func(tx *bolt.Tx) error {
+						return tx.Bucket(reqBkt).Delete(key)
+					}); err != nil {
+						log.Println(err)
+					}
 					w.Write([]byte("Request accepted"))
 				}
 			}
 		} else if reject == "1" {
+			var key []byte
+			foundInReqBkt := false
 			err = db.View(func(tx *bolt.Tx) error {
 				b := tx.Bucket(reqBkt)
 				if b == nil {
 					return nil
 				}
 				c := b.Cursor()
-				tmp := []byte(data)
+				tmp := []byte(hid)
 				for k, v := c.First(); k != nil; k, v = c.Next() {
 					if bytes.Equal(v, tmp) {
-						if err = db.Update(func(tx *bolt.Tx) error {
-							return tx.Bucket(reqBkt).Delete(k)
-						}); err != nil {
-							checkError(err)
-						}
+						foundInReqBkt = true
+						key = k
 						break
 					}
 				}
 				return err
 			})
 			checkError(err)
-			w.Write([]byte("Request rejected"))
+			if foundInReqBkt {
+				if err = db.Update(func(tx *bolt.Tx) error {
+					return tx.Bucket(reqBkt).Delete(key)
+				}); err != nil {
+					log.Println(err)
+				}
+			}
+			w.Write([]byte("Request rejected and deleted."))
 		}
 	}
 }
