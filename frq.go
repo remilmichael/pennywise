@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/gob"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"net/http"
 
@@ -22,7 +23,7 @@ func ajaxreq(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		data := r.FormValue("download")
 		if data == "1" {
-			dat, err := boltReturnAll([]byte("buddies"))
+			dat, err := boltReturnAll(bucketName)
 			checkError(err)
 			if len(dat) > 0 {
 				resp := struct {
@@ -158,44 +159,44 @@ func processreq(w http.ResponseWriter, r *http.Request) {
 			_, err = peer.IDB58Decode(data)
 			if err != nil {
 				w.Write([]byte("Invalid ID"))
-				return
-			}
-			frd := &Friend{
-				ID:       data,
-				NickName: nickname,
-			}
-			byt, err := gobEncodeFrnd(*frd)
-			checkError(err)
-			val, err := boltBudSearch(friendsBkt, frd.ID, frd.NickName)
-			checkError(err)
-			if val == 1 {
-				w.Write([]byte("Friend already exists with the ID"))
-				return
-			} else if val == 2 {
-				w.Write([]byte("Nickname already taken. Use another name"))
-			} else if val > 2 {
-				w.Write([]byte("Can't add same friend twice"))
-			} else if val == 0 {
-				err = boltInsert(friendsBkt, frd.ID, byt)
-				if err != nil {
-					return
+
+			} else {
+				frd := &Friend{
+					ID:       data,
+					NickName: nickname,
 				}
-			}
-			//pushing to send queue
-			err = db.Update(func(tx *bolt.Tx) error {
-				bucket, err := tx.CreateBucketIfNotExists(queueName)
-				if err != nil {
-					return err
-				}
-				tmp, err := bucket.NextSequence()
+
+				byt, err := gobEncodeFrnd(*frd)
 				checkError(err)
-				key := make([]byte, 8)
-				binary.LittleEndian.PutUint64(key, uint64(tmp))
-				err = bucket.Put(key, buf.Bytes())
-				return err
-			})
-			checkError(err)
-			w.Write([]byte("Request accepted"))
+				val, err := boltBudSearch(friendsBkt, frd.ID, frd.NickName)
+				checkError(err)
+				if val == 1 {
+					w.Write([]byte("Friend already exists with the ID"))
+				} else if val == 2 {
+					w.Write([]byte("Nickname already taken. Use another name"))
+				} else if val > 2 {
+					w.Write([]byte("Can't add same friend twice"))
+				} else if val == 0 {
+					fmt.Println(frd)
+					err = boltInsert(friendsBkt, frd.ID, byt)
+					checkError(err)
+					//pushing to send queue
+					err = db.Update(func(tx *bolt.Tx) error {
+						bucket, err := tx.CreateBucketIfNotExists(queueName)
+						if err != nil {
+							return err
+						}
+						tmp, err := bucket.NextSequence()
+						checkError(err)
+						key := make([]byte, 8)
+						binary.LittleEndian.PutUint64(key, uint64(tmp))
+						err = bucket.Put(key, buf.Bytes())
+						return err
+					})
+					checkError(err)
+					w.Write([]byte("Request accepted"))
+				}
+			}
 		} else if reject == "1" {
 			err = db.View(func(tx *bolt.Tx) error {
 				b := tx.Bucket(reqBkt)

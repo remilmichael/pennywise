@@ -68,7 +68,7 @@
                     dataType: 'html',
                     data: {accept: '1', reject: '0', id: hostid, name: nickname},
                     success: function(data) {
-                        
+                        $('#message').text(data)
                     },
                     error: function(error) {
                         alert(error);

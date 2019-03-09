@@ -9,12 +9,6 @@ import (
 	peer "github.com/libp2p/go-libp2p-peer"
 )
 
-type Friend struct {
-	ID       string
-	NickName string
-	Pubkey   string
-}
-
 var out output
 var addFrdTmpl *template.Template
 

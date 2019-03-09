@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/boltdb/bolt"
@@ -14,8 +15,10 @@ func processData(str string) {
 	if err := json.Unmarshal([]byte(str), &data); err != nil {
 		checkError(err)
 	}
-	if data.Flags.FrdReq == true {
+	if data.Flags.FrdReq {
 		saveFrdReq(str)
+	} else if data.Flags.FrdAck {
+		fmt.Println("passed")
 	}
 }
 
