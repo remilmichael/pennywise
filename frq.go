@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/gob"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -166,11 +167,12 @@ func processreq(w http.ResponseWriter, r *http.Request) {
 					ID:       hid,
 					NickName: nickname,
 				}
-
+				var key []byte
 				byt, err := gobEncodeFrnd(*frd)
 				checkError(err)
-				val, key, err := boltBudSearch(friendsBkt, frd.ID, frd.NickName)
+				val, err := boltBudSearch(friendsBkt, frd.ID, frd.NickName)
 				checkError(err)
+
 				if val == 1 {
 					w.Write([]byte("Friend already exists with the ID"))
 				} else if val == 2 {
@@ -194,12 +196,27 @@ func processreq(w http.ResponseWriter, r *http.Request) {
 						return err
 					})
 					checkError(err)
-					if err = db.Update(func(tx *bolt.Tx) error {
-						return tx.Bucket(reqBkt).Delete(key)
-					}); err != nil {
-						log.Println(err)
-					}
 					w.Write([]byte("Request accepted"))
+				}
+				err = db.View(func(tx *bolt.Tx) error {
+					b := tx.Bucket(reqBkt)
+					if b == nil {
+						return nil
+					}
+					c := b.Cursor()
+					for k, v := c.First(); k != nil; k, v = c.Next() {
+						if hid == string(v) {
+							key = k
+							fmt.Println("pass")
+							break
+						}
+					}
+					return nil
+				})
+				if err = db.Update(func(tx *bolt.Tx) error {
+					return tx.Bucket(reqBkt).Delete(key)
+				}); err != nil {
+					log.Println(err)
 				}
 			}
 		} else if reject == "1" {

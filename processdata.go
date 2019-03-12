@@ -103,16 +103,25 @@ func saveFrdAck(str string) {
 				if err != nil {
 					return err
 				}
+				err = bucket.Put([]byte(frd.ID), byt)
+				return nil
+			})
+			checkError(err)
+			err = db.Update(func(tx *bolt.Tx) error {
+				bucket, err := tx.CreateBucketIfNotExists(allBkts)
+				if err != nil {
+					return err
+				}
 				tmp, err := bucket.NextSequence()
 				if err != nil {
 					checkError(err)
 				}
 				key := make([]byte, 8)
 				binary.LittleEndian.PutUint64(key, uint64(tmp))
-
-				err = bucket.Put([]byte(frd.ID), byt)
+				err = bucket.Put(key, []byte(id))
 				return nil
 			})
+			checkError(err)
 		}
 	}
 }

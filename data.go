@@ -35,3 +35,6 @@ var queueName = []byte("sentqueue")
 
 //contacts
 var buddyBkt = []byte("buddies")
+
+//store all friends(buckets)
+var allBkts = []byte("buckets")
