@@ -28,6 +28,7 @@ function dwnld(){
 function printJSON(data) {
     var json = $.parseJSON(data)
     if (!json.Empty) {
+        $('#pick').empty();
         $.each(json.Data, function(index, name){
             $('#pick').append(
                 $('<option></option>').val(index).html(name)

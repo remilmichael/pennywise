@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/gob"
 	"html/template"
 	"net/http"
 
@@ -71,7 +73,12 @@ func addbill(w http.ResponseWriter, r *http.Request) {
 		}
 		c := b.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			friends = append(friends, string(v))
+			var tmp FrdSettle
+			buf := bytes.NewBuffer(v)
+			dec := gob.NewDecoder(buf)
+			err := dec.Decode(&tmp)
+			checkError(err)
+			friends = append(friends, tmp.NickName)
 		}
 		return nil
 	})

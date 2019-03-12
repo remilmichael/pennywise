@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"encoding/gob"
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -146,8 +145,7 @@ func processreq(w http.ResponseWriter, r *http.Request) {
 		accept := r.FormValue("accept")
 		reject := r.FormValue("reject")
 		hid := r.FormValue("id")
-		nickname := r.FormValue("nickname")
-
+		nickname := r.FormValue("name")
 		if accept == "1" {
 			var frq FrReqInd
 			frq.FrdReq = false
@@ -172,7 +170,6 @@ func processreq(w http.ResponseWriter, r *http.Request) {
 				checkError(err)
 				val, err := boltBudSearch(friendsBkt, frd.ID, frd.NickName)
 				checkError(err)
-
 				if val == 1 {
 					w.Write([]byte("Friend already exists with the ID"))
 				} else if val == 2 {
@@ -196,6 +193,30 @@ func processreq(w http.ResponseWriter, r *http.Request) {
 						return err
 					})
 					checkError(err)
+					frdtmp := &FrdSettle{
+						ID:       hid,
+						NickName: nickname,
+						Total:    "0",
+					}
+					var buf bytes.Buffer
+					enc := gob.NewEncoder(&buf)
+					err := enc.Encode(frdtmp)
+
+					err = db.Update(func(tx *bolt.Tx) error {
+						bucket, err := tx.CreateBucketIfNotExists(allBkts)
+						if err != nil {
+							return err
+						}
+						tmp, err := bucket.NextSequence()
+						if err != nil {
+							checkError(err)
+						}
+						key := make([]byte, 8)
+						binary.LittleEndian.PutUint64(key, uint64(tmp))
+						err = bucket.Put(key, buf.Bytes())
+						return nil
+					})
+					checkError(err)
 					w.Write([]byte("Request accepted"))
 				}
 				err = db.View(func(tx *bolt.Tx) error {
@@ -207,7 +228,6 @@ func processreq(w http.ResponseWriter, r *http.Request) {
 					for k, v := c.First(); k != nil; k, v = c.Next() {
 						if hid == string(v) {
 							key = k
-							fmt.Println("pass")
 							break
 						}
 					}

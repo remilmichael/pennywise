@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8"/>
+        <title>List bill</title>
+        <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.js"></script>
+        <script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+        <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+    <script>
+        $(document).ready(function() {
+            var table = $('#bill').DataTable({
+                language: {
+                    emptyTable: 'No data available'
+                },
+                columnDefs: [
+                    {
+                        targets: '_all',
+                        className: 'dt-body-center'
+                    }
+                ],
+                "bInfo": false,
+            });
+        } );
+    </script>
+    </head>
+    <body>
+        <table id="bill" class="" style="width:50%">
+            <thead>
+                <tr>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </thead>
+            <tbody>
+                {{ if .Found }}
+                {{ range $key, $value := .Data }}
+                <tr>
+                    <td><a href="viewbill?uname="{{ $value }}>{{ $value }}</a></td>
+                    <td></td>
+                </tr>
+                {{ end }}
+                {{end}}
+            </tbody>
+        </table>
+    </body>
+</html>

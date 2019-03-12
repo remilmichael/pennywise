@@ -162,7 +162,6 @@ func sendReq() {
 				log.Println(err)
 			}
 		}
-
 		time.Sleep(time.Second * 5)
 	}
 }

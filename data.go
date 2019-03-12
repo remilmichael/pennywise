@@ -21,6 +21,12 @@ type Friend struct {
 	Pubkey   string
 }
 
+type FrdSettle struct {
+	ID       string
+	NickName string
+	Total    string
+}
+
 //stores incoming friend requests
 var reqBkt = []byte("frequest")
 

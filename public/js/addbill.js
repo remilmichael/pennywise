@@ -4,7 +4,9 @@ $(document).ready(function(){
             {"name": "name"},
             {"name": "tf"}
         ],
-        "emptyTable": 'Add friends to split amount',
+        "language":{
+            "emptyTable": 'Add friends to split amount',
+        },
         "bInfo": false,
         "bFilter": true,
         "paging":   false,
@@ -32,4 +34,7 @@ $(document).ready(function(){
             table.row(rowno).remove().draw();
         }
     })
+    $('input[type=radio][name=split]').change(function(){
+        table.rows().remove().draw();
+    });
 });
