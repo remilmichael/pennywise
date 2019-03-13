@@ -159,7 +159,6 @@ func processreq(w http.ResponseWriter, r *http.Request) {
 			_, err = peer.IDB58Decode(hid)
 			if err != nil {
 				w.Write([]byte("Invalid ID"))
-
 			} else {
 				frd := &Friend{
 					ID:       hid,

@@ -36,6 +36,7 @@ func main() {
 	r.HandleFunc("/settlement", settlement)
 	r.HandleFunc("/viewbill", viewbill)
 	r.HandleFunc("/addbill", addbill)
+	r.HandleFunc("/uploadbill", uploadBill)
 	r.PathPrefix("/public/").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
 	srv := &http.Server{
 		Handler:      r,

@@ -27,6 +27,12 @@ type FrdSettle struct {
 	Total    string
 }
 
+type toSentBill struct {
+	id     string
+	name   string
+	amount string
+}
+
 //stores incoming friend requests
 var reqBkt = []byte("frequest")
 
