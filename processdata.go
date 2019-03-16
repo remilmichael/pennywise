@@ -6,6 +6,8 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"log"
+	"math"
+	"strconv"
 
 	"github.com/boltdb/bolt"
 	crypto "github.com/libp2p/go-libp2p-crypto"
@@ -131,7 +133,8 @@ func saveFrdAck(str string) {
 				frdtmp := &FrdSettle{
 					ID:       id,
 					NickName: name,
-					Total:    "0",
+					Owns:     "0",
+					Owes:     "0",
 				}
 				var buf bytes.Buffer
 				enc := gob.NewEncoder(&buf)
@@ -184,7 +187,7 @@ func saveBill(str string) {
 			var frd Friend
 			var name string
 			err = db.View(func(tx *bolt.Tx) error {
-				b := tx.Bucket(reqBkt)
+				b := tx.Bucket(friendsBkt)
 				if b == nil {
 					return nil
 				}
@@ -222,6 +225,58 @@ func saveBill(str string) {
 					return err
 				})
 				checkError(err)
+				var gotData bool
+				var keyToUpdate []byte
+				var dataToUpdate FrdSettle
+				err = db.View(func(tx *bolt.Tx) error {
+					b := tx.Bucket(allBkts)
+					if b == nil {
+						return nil
+					}
+					c := b.Cursor()
+					for k, v := c.First(); k != nil; k, v = c.Next() {
+						var tmp FrdSettle
+						buf2 := bytes.NewBuffer(v)
+						dec := gob.NewDecoder(buf2)
+						err = dec.Decode(&tmp)
+						if tmp.ID == verifyme.HostID {
+							keyToUpdate = k
+							dataToUpdate.ID = tmp.ID
+							dataToUpdate.NickName = tmp.NickName
+							oweprev, err := strconv.Atoi(tmp.Owes)
+							checkError(err)
+							owecurr, err := strconv.Atoi(verifyme.Amount)
+							checkError(err)
+							prevOwn, err := strconv.Atoi(tmp.Owns)
+							adj := prevOwn - owecurr
+							if adj <= 0 {
+								dataToUpdate.Owns = "0"
+								adj = int(math.Abs(float64(adj)))
+								dataToUpdate.Owes = strconv.Itoa(oweprev + adj)
+							} else {
+								dataToUpdate.Owns = strconv.Itoa(adj)
+								dataToUpdate.Owes = "0"
+							}
+							gotData = true
+							break
+						}
+					}
+					return nil
+				})
+				checkError(err)
+				if gotData {
+					err = db.Update(func(tx *bolt.Tx) error {
+						bucket, err := tx.CreateBucketIfNotExists(allBkts)
+						if err != nil {
+							return err
+						}
+						var buftemp bytes.Buffer
+						enc := gob.NewEncoder(&buftemp)
+						err = enc.Encode(dataToUpdate)
+						err = bucket.Put(keyToUpdate, buftemp.Bytes())
+						return err
+					})
+				}
 			}
 		}
 	}

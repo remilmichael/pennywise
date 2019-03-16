@@ -6,8 +6,10 @@ import (
 	"encoding/gob"
 	"html/template"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	crypto "github.com/libp2p/go-libp2p-crypto"
@@ -20,30 +22,54 @@ import (
 func settlement(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles("html/settlement.html")
 	checkError(err)
-	var friends []string
+	var frd FrdSettle
+	var array []ViewSettlement
 	err = db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(allBkts)
 		if b == nil {
 			return nil
 		}
 		c := b.Cursor()
-		for k, v := c.First(); k != nil; k, v = c.First() {
-			friends = append(friends, string(v))
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			buf := bytes.NewBuffer(v)
+			dec := gob.NewDecoder(buf)
+			err = dec.Decode(&frd)
+			checkError(err)
+			if frd.ID != "" && frd.NickName != "" {
+				ows, err := strconv.Atoi(frd.Owes)
+				checkError(err)
+				own, err := strconv.Atoi(frd.Owns)
+				checkError(err)
+				msg := ""
+				tot := own - ows
+				if own <= ows {
+					msg = "You owe "
+					tot = tot * -1
+				} else {
+					msg = "Owes you "
+				}
+				tmp := ViewSettlement{
+					NickName: frd.NickName,
+					Total:    strconv.Itoa(tot),
+					Message:  msg,
+				}
+				array = append(array, tmp)
+			}
 		}
 		return nil
 	})
-	if len(friends) > 0 {
+	if len(array) > 0 {
 		resp := struct {
 			Found bool
-			Data  []string
+			Data  []ViewSettlement
 		}{
-			true, friends,
+			true, array,
 		}
 		tmpl.Execute(w, resp)
 	} else {
 		resp := struct {
 			Found bool
-			Data  []string
+			Data  []ViewSettlement
 		}{
 			false, nil,
 		}
@@ -198,7 +224,11 @@ func uploadBill(w http.ResponseWriter, r *http.Request) {
 					sign.Description = description
 					sign.Amount = dat.amount
 					sign.Date = billdt
-					sign.HostID = id.Pretty()
+					if thisHost == nil {
+						sign.HostID = id.Pretty()
+					} else {
+						sign.HostID = thisHost.ID().Pretty()
+					}
 					sign.PeerID = dat.id
 					var buf bytes.Buffer
 					enc := gob.NewEncoder(&buf)
@@ -221,22 +251,93 @@ func uploadBill(w http.ResponseWriter, r *http.Request) {
 						err = dec.Decode(&sendbill)
 						fmt.Println(sendbill)
 					*/
+
+					var billInsert BillSave
+					billInsert.PeerID = bill.PeerID
+					billInsert.Description = bill.Description
+					billInsert.Amount = bill.Amount
+					billInsert.Date = bill.Date
+					billInsert.DateAdded = bill.DateAdded
+					var tmpbuf bytes.Buffer
+					enc = gob.NewEncoder(&tmpbuf)
+					err = enc.Encode(billInsert)
 					err = db.Update(func(tx *bolt.Tx) error {
-						bucket, err := tx.CreateBucketIfNotExists(queueName)
+						bucket, err := tx.CreateBucketIfNotExists([]byte(dat.name))
 						if err != nil {
 							return err
 						}
-						tmp, err := bucket.NextSequence()
-						checkError(err)
-						key := make([]byte, 8)
-						binary.LittleEndian.PutUint64(key, uint64(tmp))
-						err = bucket.Put(key, buf.Bytes())
+						err = bucket.Put([]byte(sign.UUID), tmpbuf.Bytes())
 						return err
 					})
-					checkError(err)
+					if err == nil {
+						var gotData bool
+						var keyToUpdate []byte
+						var dataToUpdate FrdSettle
+						err = db.View(func(tx *bolt.Tx) error {
+							b := tx.Bucket(allBkts)
+							if b == nil {
+								return nil
+							}
+							c := b.Cursor()
+							for k, v := c.First(); k != nil; k, v = c.Next() {
+								var tmp FrdSettle
+								buf2 := bytes.NewBuffer(v)
+								dec := gob.NewDecoder(buf2)
+								err = dec.Decode(&tmp)
+								if tmp.NickName == dat.name {
+									//change is necessary here if any user can add anyones bill
+									keyToUpdate = k
+									dataToUpdate.ID = dat.id
+									dataToUpdate.NickName = tmp.NickName
+									prev, err := strconv.Atoi(tmp.Owns)
+									checkError(err)
+									current, err := strconv.Atoi(dat.amount)
+									prevOwe, err := strconv.Atoi(tmp.Owes)
+									adj := prevOwe - current
+									if adj <= 0 {
+										dataToUpdate.Owes = "0"
+										adj = int(math.Abs(float64(adj)))
+										dataToUpdate.Owns = strconv.Itoa(prev + adj)
+									} else {
+										dataToUpdate.Owes = strconv.Itoa(adj)
+										dataToUpdate.Owns = "0"
+									}
+									gotData = true
+									break
+								}
+							}
+							return nil
+						})
+						checkError(err)
+						if gotData {
+							err = db.Update(func(tx *bolt.Tx) error {
+								bucket, err := tx.CreateBucketIfNotExists(allBkts)
+								if err != nil {
+									return err
+								}
+								var buftemp bytes.Buffer
+								enc := gob.NewEncoder(&buftemp)
+								err = enc.Encode(dataToUpdate)
+								err = bucket.Put(keyToUpdate, buftemp.Bytes())
+								return err
+							})
+							err = db.Update(func(tx *bolt.Tx) error {
+								bucket, err := tx.CreateBucketIfNotExists(queueName)
+								if err != nil {
+									return err
+								}
+								tmp, err := bucket.NextSequence()
+								checkError(err)
+								key := make([]byte, 8)
+								binary.LittleEndian.PutUint64(key, uint64(tmp))
+								err = bucket.Put(key, buf.Bytes())
+								return err
+							})
+							checkError(err)
+						}
+					}
 				}
 			}()
 		}
 	}
-	w.Write([]byte(""))
 }

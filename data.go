@@ -26,7 +26,14 @@ type Friend struct {
 type FrdSettle struct {
 	ID       string
 	NickName string
+	Owns     string
+	Owes     string
+}
+
+type ViewSettlement struct {
+	NickName string
 	Total    string
+	Message  string
 }
 
 type toSentBill struct {
@@ -80,4 +87,5 @@ var queueName = []byte("sentqueue")
 var buddyBkt = []byte("buddies")
 
 //store all friends(buckets)
+//key = 8 byte random key, value = byte(struct FrdSettle)
 var allBkts = []byte("buckets")

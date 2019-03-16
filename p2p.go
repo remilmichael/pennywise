@@ -88,6 +88,7 @@ func sendReq() {
 					buf = bytes.NewBuffer(v)
 					dec = gob.NewDecoder(buf)
 					err = dec.Decode(&sendbill)
+					//fmt.Println(sendbill)
 					checkError(err)
 					pid, err = peer.IDB58Decode(sendbill.SignMe.PeerID)
 					checkError(err)

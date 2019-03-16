@@ -6,6 +6,27 @@
         <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.js"></script>
         <script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
         <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+    </head>
+    <body>
+        <table id="bill" class="cell-border compact stripe" style="width:30%">
+            <thead>
+                <tr></tr>
+                    <th>Friend</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{ if .Found }}
+                {{ range .Data}}
+                <tr>
+                    <td><a href="viewbill?uname={{ .NickName }}">{{ .NickName }}</a></td>
+                    <td>{{ .Message }} {{ .Total }}</td>
+                </tr>
+                {{ end }}
+                {{ end }}
+            </tbody>
+        </table>
+    </body>
     <script>
         $(document).ready(function() {
             var table = $('#bill').DataTable({
@@ -14,33 +35,18 @@
                 },
                 columnDefs: [
                     {
-                        targets: '_all',
-                        className: 'dt-body-center'
-                    }
+                        targets: [0,1],
+                        className: 'dt-body-center dt-head-center'
+                    },
+                    
                 ],
                 "bInfo": false,
+                "bFilter": true,
+                "paging":   false,
+                "info":     false,
+                "searching": false
             });
         } );
     </script>
-    </head>
-    <body>
-        <table id="bill" class="" style="width:50%">
-            <thead>
-                <tr>
-                    <td></td>
-                    <td></td>
-                </tr>
-            </thead>
-            <tbody>
-                {{ if .Found }}
-                {{ range $key, $value := .Data }}
-                <tr>
-                    <td><a href="viewbill?uname="{{ $value }}>{{ $value }}</a></td>
-                    <td></td>
-                </tr>
-                {{ end }}
-                {{end}}
-            </tbody>
-        </table>
-    </body>
+    
 </html>

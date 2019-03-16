@@ -196,7 +196,8 @@ func processreq(w http.ResponseWriter, r *http.Request) {
 					frdtmp := &FrdSettle{
 						ID:       hid,
 						NickName: nickname,
-						Total:    "0",
+						Owns:     "0",
+						Owes:     "0",
 					}
 					var buf bytes.Buffer
 					enc := gob.NewEncoder(&buf)
