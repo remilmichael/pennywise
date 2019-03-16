@@ -91,6 +91,7 @@ func bootstrap(w http.ResponseWriter, r *http.Request) {
 								break
 							}
 							if err = thisHost.Connect(ctx, *bootInfo); err != nil {
+								log.Println(err)
 								thisHost.Network().(*swarm.Swarm).Backoff().Clear(bootInfo.ID)
 								time.Sleep(time.Second * 5)
 							} else {

@@ -8,6 +8,7 @@ import (
 	"log"
 
 	"github.com/boltdb/bolt"
+	crypto "github.com/libp2p/go-libp2p-crypto"
 )
 
 func processData(str string) {
@@ -175,7 +176,9 @@ func saveBill(str string) {
 		enc := gob.NewEncoder(&buf)
 		err = enc.Encode(verifyme)
 		checkError(err)
-		signValid, err := bill.PubKey.Verify(buf.Bytes(), bill.Signature)
+		peerPubkey, err := crypto.UnmarshalPublicKey(bill.PubKey)
+		checkError(err)
+		signValid, err := peerPubkey.Verify(buf.Bytes(), bill.Signature)
 		checkError(err)
 		if signValid {
 			var frd Friend

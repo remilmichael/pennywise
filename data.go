@@ -1,7 +1,5 @@
 package main
 
-import crypto "github.com/libp2p/go-libp2p-crypto"
-
 type Flags struct {
 	FrdReq     bool `json:"frdReq"`
 	FrdAck     bool `json:"frdAck"`
@@ -40,8 +38,8 @@ type toSentBill struct {
 //to push into queue
 type BillUpload struct {
 	Flags     `json:"flags"`
-	PubKey    crypto.PubKey `json:"pubkey"`
 	SignMe    `json:"signme"`
+	PubKey    []byte `json:"pubkey"`
 	Signature []byte `json:"signature"`
 }
 

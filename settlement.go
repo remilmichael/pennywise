@@ -209,11 +209,11 @@ func uploadBill(w http.ResponseWriter, r *http.Request) {
 					bill.SignMe = sign
 					bill.Signature = signature
 					bill.Billup = true
-					bill.PubKey = pubKey
+					temp, err := crypto.MarshalPublicKey(pubKey)
+					bill.PubKey = temp
 					buf.Reset()
 					enc = gob.NewEncoder(&buf)
 					err = enc.Encode(bill)
-
 					/*
 						var sendbill BillUpload
 						buf2 := bytes.NewBuffer(buf.Bytes())

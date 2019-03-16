@@ -76,7 +76,6 @@ func sendReq() {
 				buf := bytes.NewBuffer(v)
 				dec := gob.NewDecoder(buf)
 				err := dec.Decode(&recv)
-				checkError(err)
 				if recv.FrdReq == true || recv.FrdAck == true {
 					buf = bytes.NewBuffer(v)
 					dec = gob.NewDecoder(buf)
