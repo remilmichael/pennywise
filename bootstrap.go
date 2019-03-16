@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -10,20 +9,17 @@ import (
 	"os"
 	"time"
 
-	peerstore "github.com/libp2p/go-libp2p-peerstore"
-	swarm "github.com/libp2p/go-libp2p-swarm"
-	multihash "github.com/multiformats/go-multihash"
-
 	cid "github.com/ipfs/go-cid"
 	datastore "github.com/ipfs/go-datastore"
 	ipfsaddr "github.com/ipfs/go-ipfs-addr"
-	dht "github.com/libp2p/go-libp2p-kad-dht"
-
 	libp2p "github.com/libp2p/go-libp2p"
-
 	circuit "github.com/libp2p/go-libp2p-circuit"
 	crypto "github.com/libp2p/go-libp2p-crypto"
 	host "github.com/libp2p/go-libp2p-host"
+	dht "github.com/libp2p/go-libp2p-kad-dht"
+	peerstore "github.com/libp2p/go-libp2p-peerstore"
+	swarm "github.com/libp2p/go-libp2p-swarm"
+	multihash "github.com/multiformats/go-multihash"
 )
 
 var pubKey crypto.PubKey
@@ -68,82 +64,84 @@ func bootstrap(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				out.Redirect = true
 				tmpl.Execute(w, out)
-			}
-			thisHost, err = libp2p.New(
-				ctx,
-				libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/4001", "/ip6/::/tcp/4001"),
-				libp2p.Identity(prvKey),
-				libp2p.NATPortMap(),
-				libp2p.EnableRelay(circuit.OptDiscovery, circuit.OptHop),
-			)
-			if err != nil {
-				out.Error = true
-				out.Msg = "Unable to boot host"
-				tmpl.Execute(w, out)
 			} else {
-				fmt.Println(thisHost.ID().Pretty())
-				dhtClient = dht.NewDHTClient(ctx, thisHost, datastore.NewMapDatastore())
-				bootAddr, _ := ipfsaddr.ParseString(bootStrapPeer)
-				bootInfo, _ := peerstore.InfoFromP2pAddr(bootAddr.Multiaddr())
-				outChan := make(chan bool)
-				go func(outChan chan<- bool) {
-					bootCount := 0
-					for {
-						if bootCount > 5 {
-							outChan <- false
-							break
-						}
-						if err = thisHost.Connect(ctx, *bootInfo); err != nil {
-							thisHost.Network().(*swarm.Swarm).Backoff().Clear(bootInfo.ID)
-							time.Sleep(time.Second * 5)
-						} else {
-							thisHost.SetStreamHandler("/cats", handleStream)
-							outChan <- true
-							break
-						}
-						bootCount++
-					}
-				}(outChan)
-				if !<-outChan {
-					thisHost.Close()
-					hostRunning = false
+				pubKey = prvKey.GetPublic()
+				thisHost, err = libp2p.New(
+					ctx,
+					libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/4001", "/ip6/::/tcp/4001"),
+					libp2p.Identity(prvKey),
+					libp2p.NATPortMap(),
+					libp2p.EnableRelay(circuit.OptDiscovery, circuit.OptHop),
+				)
+				if err != nil {
 					out.Error = true
-					out.Msg = "Bootstrapping failed."
+					out.Msg = "Unable to boot host"
 					tmpl.Execute(w, out)
 				} else {
-					hostRunning = true
-					pref := cid.V1Builder{
-						Codec:  cid.Raw,
-						MhType: multihash.SHA2_256,
-					}
-					contID, err := pref.Sum([]byte(rendezvous))
-					checkError(err)
-					tctx, ctxCancel := context.WithTimeout(ctx, time.Second*10)
-					_ = ctxCancel
-
-					//Announcing
-					//go func() {
-					for {
-						if err = dhtClient.Provide(tctx, contID, true); err != nil {
-							time.Sleep(time.Second * 3)
-						} else {
-							break
-						}
-					}
-					log.Println("Bootstrapping successful.")
-					//}()
-					if hostRunning {
-						go func() {
-							for {
-								sendReq()
+					log.Println(thisHost.ID().Pretty())
+					dhtClient = dht.NewDHTClient(ctx, thisHost, datastore.NewMapDatastore())
+					bootAddr, _ := ipfsaddr.ParseString(bootStrapPeer)
+					bootInfo, _ := peerstore.InfoFromP2pAddr(bootAddr.Multiaddr())
+					outChan := make(chan bool)
+					go func(outChan chan<- bool) {
+						bootCount := 0
+						for {
+							if bootCount > 5 {
+								outChan <- false
+								break
 							}
-						}()
-						/*go func() {
-							for {
-								fmt.Println(thisHost.Network().Peers())
+							if err = thisHost.Connect(ctx, *bootInfo); err != nil {
+								thisHost.Network().(*swarm.Swarm).Backoff().Clear(bootInfo.ID)
 								time.Sleep(time.Second * 5)
+							} else {
+								thisHost.SetStreamHandler("/cats", handleStream)
+								outChan <- true
+								break
 							}
-						}()*/
+							bootCount++
+						}
+					}(outChan)
+					if !<-outChan {
+						thisHost.Close()
+						hostRunning = false
+						out.Error = true
+						out.Msg = "Bootstrapping failed."
+						tmpl.Execute(w, out)
+					} else {
+						hostRunning = true
+						pref := cid.V1Builder{
+							Codec:  cid.Raw,
+							MhType: multihash.SHA2_256,
+						}
+						contID, err := pref.Sum([]byte(rendezvous))
+						checkError(err)
+						tctx, ctxCancel := context.WithTimeout(ctx, time.Second*10)
+						_ = ctxCancel
+
+						//Announcing
+						//go func() {
+						for {
+							if err = dhtClient.Provide(tctx, contID, true); err != nil {
+								time.Sleep(time.Second * 3)
+							} else {
+								break
+							}
+						}
+						log.Println("Bootstrapping successful.")
+						//}()
+						if hostRunning {
+							go func() {
+								for {
+									sendReq()
+								}
+							}()
+							/*go func() {
+								for {
+									log.Println(thisHost.Network().Peers())
+									time.Sleep(time.Second * 5)
+								}
+							}()*/
+						}
 					}
 				}
 			}

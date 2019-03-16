@@ -92,6 +92,7 @@ func viewreq(w http.ResponseWriter, r *http.Request) {
 			}
 			c := b.Cursor()
 			for k, v := c.First(); k != nil; k, v = c.Next() {
+				//
 				dat = append(dat, string(v))
 			}
 			return err

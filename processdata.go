@@ -19,6 +19,8 @@ func processData(str string) {
 		saveFrdReq(str)
 	} else if data.Flags.FrdAck {
 		saveFrdAck(str)
+	} else if data.Flags.Billup {
+		saveBill(str)
 	}
 }
 
@@ -147,6 +149,74 @@ func saveFrdAck(str string) {
 					binary.LittleEndian.PutUint64(key, uint64(tmp))
 					err = bucket.Put(key, buf.Bytes())
 					return nil
+				})
+				checkError(err)
+			}
+		}
+	}
+}
+
+func saveBill(str string) {
+	var err error
+	var bill BillUpload
+	var verifyme SignMe
+	if err = json.Unmarshal([]byte(str), &bill); err != nil {
+		//ignore
+		log.Println(err)
+	} else {
+		verifyme.UUID = bill.UUID
+		verifyme.HostID = bill.HostID
+		verifyme.PeerID = bill.PeerID
+		verifyme.Description = bill.Description
+		verifyme.Amount = bill.Amount
+		verifyme.Date = bill.Date
+		verifyme.DateAdded = bill.DateAdded
+		var buf bytes.Buffer
+		enc := gob.NewEncoder(&buf)
+		err = enc.Encode(verifyme)
+		checkError(err)
+		signValid, err := bill.PubKey.Verify(buf.Bytes(), bill.Signature)
+		checkError(err)
+		if signValid {
+			var frd Friend
+			var name string
+			err = db.View(func(tx *bolt.Tx) error {
+				b := tx.Bucket(reqBkt)
+				if b == nil {
+					return nil
+				}
+				c := b.Cursor()
+				for k, v := c.First(); k != nil; k, v = c.Next() {
+					buf := bytes.NewBuffer(v)
+					dec := gob.NewDecoder(buf)
+					err = dec.Decode(&frd)
+					if frd.ID == verifyme.HostID {
+						name = frd.NickName
+						break
+					}
+				}
+				return nil
+			})
+			checkError(err)
+			if name != "" {
+				var billInsert BillSave
+				billInsert.PeerID = verifyme.HostID
+				billInsert.Description = verifyme.Description
+				billInsert.Amount = verifyme.Amount
+				billInsert.Date = verifyme.Date
+				billInsert.DateAdded = verifyme.DateAdded
+				var buf bytes.Buffer
+				enc := gob.NewEncoder(&buf)
+				err = enc.Encode(billInsert)
+				checkError(err)
+				err = db.Update(func(tx *bolt.Tx) error {
+					bucket, err := tx.CreateBucketIfNotExists([]byte(name))
+					if err != nil {
+						return err
+					}
+					key := []byte(verifyme.UUID)
+					err = bucket.Put(key, buf.Bytes())
+					return err
 				})
 				checkError(err)
 			}

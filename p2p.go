@@ -55,6 +55,7 @@ func writeData(rw *bufio.ReadWriter, s net.Stream, pid peer.ID, bytes []byte) bo
 func sendReq() {
 	var frq FrReqInd
 	var pid peer.ID
+	var sendbill BillUpload
 	var byteData []byte
 	var keyToDelete []byte
 	var transmitDone bool
@@ -75,13 +76,7 @@ func sendReq() {
 				buf := bytes.NewBuffer(v)
 				dec := gob.NewDecoder(buf)
 				err := dec.Decode(&recv)
-
-				/*var frq FrReqInd
-				buf = bytes.NewBuffer(v)
-				dec = gob.NewDecoder(buf)
-				err = dec.Decode(&frq)
-				fmt.Println(frq)*/
-
+				checkError(err)
 				if recv.FrdReq == true || recv.FrdAck == true {
 					buf = bytes.NewBuffer(v)
 					dec = gob.NewDecoder(buf)
@@ -89,6 +84,15 @@ func sendReq() {
 					pid, err = peer.IDB58Decode(frq.PeerID)
 					checkError(err)
 					byteData, err = json.Marshal(frq)
+					checkError(err)
+				} else if recv.Billup {
+					buf = bytes.NewBuffer(v)
+					dec = gob.NewDecoder(buf)
+					err = dec.Decode(&sendbill)
+					checkError(err)
+					pid, err = peer.IDB58Decode(sendbill.SignMe.PeerID)
+					checkError(err)
+					byteData, err = json.Marshal(sendbill)
 					checkError(err)
 				}
 				tctx, _ := context.WithTimeout(ctx, time.Second*10)
@@ -105,7 +109,6 @@ func sendReq() {
 							continue
 						}
 						rw := bufio.NewReadWriter(bufio.NewReader(s), bufio.NewWriter(s))
-						_ = rw
 						//time.Sleep(time.Second * 2)
 						if writeData(rw, s, pid, byteData) {
 							keyToDelete = key

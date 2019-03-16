@@ -2,10 +2,17 @@ package main
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/gob"
-	"fmt"
 	"html/template"
+	"io/ioutil"
 	"net/http"
+	"os"
+	"time"
+
+	crypto "github.com/libp2p/go-libp2p-crypto"
+	peer "github.com/libp2p/go-libp2p-peer"
+	"github.com/segmentio/ksuid"
 
 	"github.com/boltdb/bolt"
 )
@@ -105,11 +112,16 @@ func addbill(w http.ResponseWriter, r *http.Request) {
 func uploadBill(w http.ResponseWriter, r *http.Request) {
 	var friends []string
 	var amtSplit []string
-	var descrption string
+	var description string
 	var totalAmt string
 	var billdt string
 	var sentlist []toSentBill
+	var uuid string
+	var dateNow string
 	if r.Method == "POST" {
+		dt := time.Now()
+		uuid = ksuid.New().String()
+		dateNow = dt.Format("02/01/2006")
 		err := r.ParseForm()
 		checkError(err)
 		for key, value := range r.Form {
@@ -118,14 +130,14 @@ func uploadBill(w http.ResponseWriter, r *http.Request) {
 			} else if key == "amtsplit[]" {
 				amtSplit = value
 			} else if key == "des" {
-				descrption = value[0]
+				description = value[0]
 			} else if key == "tamt" {
 				totalAmt = value[0]
 			} else if key == "billdt" {
 				billdt = value[0]
 			}
 		}
-		if len(friends) != len(amtSplit) || len(friends) == 0 || descrption == "" || totalAmt == "" || billdt == "" {
+		if len(friends) != len(amtSplit) || len(friends) == 0 || description == "" || totalAmt == "" || billdt == "" {
 			w.Write([]byte("Invalid data provided"))
 		} else {
 			err = db.View(func(tx *bolt.Tx) error {
@@ -152,7 +164,78 @@ func uploadBill(w http.ResponseWriter, r *http.Request) {
 				return nil
 			})
 			checkError(err)
-			fmt.Println(sentlist)
+			var sign SignMe
+			var id peer.ID
+			if thisHost == nil {
+				sKeyName := "prvKey.pem"
+				fileFound := true
+				file, err := os.Open(sKeyName)
+				if err != nil {
+					if err.Error() == "open "+sKeyName+": no such file or directory" {
+						fileFound = false
+					}
+				}
+				file.Close()
+				if !fileFound {
+					w.Write([]byte("Create or import credentials first."))
+				} else {
+					byt, err := ioutil.ReadFile(sKeyName)
+					prvKey, err = crypto.UnmarshalRsaPrivateKey(byt)
+					if err != nil {
+
+					}
+					id, err = peer.IDFromPrivateKey(prvKey)
+					checkError(err)
+					pubKey = prvKey.GetPublic()
+				}
+			}
+			w.Write([]byte("Bill saved and pushed into queue"))
+			go func() {
+				var bill BillUpload
+				for _, dat := range sentlist {
+					sign.UUID = uuid
+					sign.DateAdded = dateNow
+					sign.Description = description
+					sign.Amount = dat.amount
+					sign.Date = billdt
+					sign.HostID = id.Pretty()
+					sign.PeerID = dat.id
+					var buf bytes.Buffer
+					enc := gob.NewEncoder(&buf)
+					err = enc.Encode(sign)
+					checkError(err)
+					signature, err := prvKey.Sign(buf.Bytes())
+					checkError(err)
+					bill.SignMe = sign
+					bill.Signature = signature
+					bill.Billup = true
+					bill.PubKey = pubKey
+					buf.Reset()
+					enc = gob.NewEncoder(&buf)
+					err = enc.Encode(bill)
+
+					/*
+						var sendbill BillUpload
+						buf2 := bytes.NewBuffer(buf.Bytes())
+						dec := gob.NewDecoder(buf2)
+						err = dec.Decode(&sendbill)
+						fmt.Println(sendbill)
+					*/
+					err = db.Update(func(tx *bolt.Tx) error {
+						bucket, err := tx.CreateBucketIfNotExists(queueName)
+						if err != nil {
+							return err
+						}
+						tmp, err := bucket.NextSequence()
+						checkError(err)
+						key := make([]byte, 8)
+						binary.LittleEndian.PutUint64(key, uint64(tmp))
+						err = bucket.Put(key, buf.Bytes())
+						return err
+					})
+					checkError(err)
+				}
+			}()
 		}
 	}
 	w.Write([]byte(""))
