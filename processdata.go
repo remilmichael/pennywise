@@ -211,6 +211,7 @@ func saveBill(str string) {
 				billInsert.Amount = verifyme.Amount
 				billInsert.Date = verifyme.Date
 				billInsert.DateAdded = verifyme.DateAdded
+				billInsert.Type = 0
 				var buf bytes.Buffer
 				enc := gob.NewEncoder(&buf)
 				err = enc.Encode(billInsert)

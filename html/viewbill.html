@@ -9,13 +9,14 @@
         $(document).ready(function() {
             var table = $('#friends').DataTable({
                 language: {
-                    emptyTable: 'No data available'
+                    emptyTable: 'No transaction history exists.'
                 },
                 columnDefs: [
                     {
                         targets: '_all',
-                        className: 'dt-body-center'
-                    }
+                        className: 'dt-body-center dt-head-center'
+                    },
+                    
                 ],
                 "bInfo": false,
             });
@@ -23,7 +24,7 @@
     </script>
 </head>
 <body>
-<table id="friends" class="" style="width:50%">
+<table id="friends" class="display" style="width:50%">
     <thead>
         <tr>
             <td>Description</td>
@@ -32,14 +33,24 @@
             <td>Added on</td>
         </tr>
     </thead>
-    <table>
+    <tbody>
+        {{ if .Found }}
+        {{ range .Data }}
+        {{ if eq .Type 1 }}
+        <tr style="color:green; font-weight: bold;">
+        {{ else if eq .Type 0 }}
+        <tr style="color:red; font-weight: bold;">
+        {{ else }}
         <tr>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
+        {{ end }}
+            <td>{{ .Description }}</td>
+            <td>{{ .Amount }}</td>
+            <td>{{ .Date }}</td>
+            <td>{{ .DateAdded }}</td>
         </tr>
-    </table>
+        {{ end }}
+        {{ end }}
+    </tbody>
 </table>
 </body>
 </html>

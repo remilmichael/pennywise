@@ -79,20 +79,56 @@ func settlement(w http.ResponseWriter, r *http.Request) {
 
 func viewbill(w http.ResponseWriter, r *http.Request) {
 	var err error
+	tmpl, err := template.ParseFiles("html/viewbill.html")
+	checkError(err)
 	if r.Method == http.MethodGet {
 		if uname := r.URL.Query().Get("uname"); uname != "" {
+			var bills BillSave
+			var disp []DisplayBill
+			var tmp DisplayBill
 			err = db.View(func(tx *bolt.Tx) error {
 				b := tx.Bucket([]byte(uname))
 				if b == nil {
 					return nil
 				}
 				c := b.Cursor()
-				_ = c
-				//to be continued
+				for k, v := c.First(); k != nil; k, v = c.Next() {
+					buf := bytes.NewBuffer(v)
+					dec := gob.NewDecoder(buf)
+					err = dec.Decode(&bills)
+					tmp.Uid = bills.Uid
+					tmp.Description = bills.Description
+					tmp.Amount = bills.Amount
+					tmp.Date = bills.Date
+					tmp.DateAdded = bills.DateAdded
+					tmp.Type = bills.Type
+					disp = append(disp, tmp)
+				}
 				return nil
 			})
 			checkError(err)
+			if len(disp) > 0 {
+				resp := struct {
+					Found bool
+					Data  []DisplayBill
+				}{
+					true, disp,
+				}
+				tmpl.Execute(w, resp)
+			} else {
+				resp := struct {
+					Found bool
+					Data  []DisplayBill
+				}{
+					false, nil,
+				}
+				tmpl.Execute(w, resp)
+			}
+		} else {
+			//redirect
 		}
+	} else {
+		//redirect
 	}
 }
 
@@ -192,6 +228,7 @@ func uploadBill(w http.ResponseWriter, r *http.Request) {
 			checkError(err)
 			var sign SignMe
 			var id peer.ID
+			fileNotFound := false
 			if thisHost == nil {
 				sKeyName := "prvKey.pem"
 				fileFound := true
@@ -203,6 +240,7 @@ func uploadBill(w http.ResponseWriter, r *http.Request) {
 				}
 				file.Close()
 				if !fileFound {
+					fileNotFound = true
 					w.Write([]byte("Create or import credentials first."))
 				} else {
 					byt, err := ioutil.ReadFile(sKeyName)
@@ -215,129 +253,133 @@ func uploadBill(w http.ResponseWriter, r *http.Request) {
 					pubKey = prvKey.GetPublic()
 				}
 			}
-			w.Write([]byte("Bill saved and pushed into queue"))
-			go func() {
-				var bill BillUpload
-				for _, dat := range sentlist {
-					sign.UUID = uuid
-					sign.DateAdded = dateNow
-					sign.Description = description
-					sign.Amount = dat.amount
-					sign.Date = billdt
-					if thisHost == nil {
-						sign.HostID = id.Pretty()
-					} else {
-						sign.HostID = thisHost.ID().Pretty()
-					}
-					sign.PeerID = dat.id
-					var buf bytes.Buffer
-					enc := gob.NewEncoder(&buf)
-					err = enc.Encode(sign)
-					checkError(err)
-					signature, err := prvKey.Sign(buf.Bytes())
-					checkError(err)
-					bill.SignMe = sign
-					bill.Signature = signature
-					bill.Billup = true
-					temp, err := crypto.MarshalPublicKey(pubKey)
-					bill.PubKey = temp
-					buf.Reset()
-					enc = gob.NewEncoder(&buf)
-					err = enc.Encode(bill)
-					/*
-						var sendbill BillUpload
-						buf2 := bytes.NewBuffer(buf.Bytes())
-						dec := gob.NewDecoder(buf2)
-						err = dec.Decode(&sendbill)
-						fmt.Println(sendbill)
-					*/
-
-					var billInsert BillSave
-					billInsert.PeerID = bill.PeerID
-					billInsert.Description = bill.Description
-					billInsert.Amount = bill.Amount
-					billInsert.Date = bill.Date
-					billInsert.DateAdded = bill.DateAdded
-					var tmpbuf bytes.Buffer
-					enc = gob.NewEncoder(&tmpbuf)
-					err = enc.Encode(billInsert)
-					err = db.Update(func(tx *bolt.Tx) error {
-						bucket, err := tx.CreateBucketIfNotExists([]byte(dat.name))
-						if err != nil {
-							return err
+			if !fileNotFound {
+				w.Write([]byte("Bill saved and pushed into queue"))
+				go func() {
+					var bill BillUpload
+					for _, dat := range sentlist {
+						sign.UUID = uuid
+						sign.DateAdded = dateNow
+						sign.Description = description
+						sign.Amount = dat.amount
+						sign.Date = billdt
+						if thisHost == nil {
+							sign.HostID = id.Pretty()
+						} else {
+							sign.HostID = thisHost.ID().Pretty()
 						}
-						err = bucket.Put([]byte(sign.UUID), tmpbuf.Bytes())
-						return err
-					})
-					if err == nil {
-						var gotData bool
-						var keyToUpdate []byte
-						var dataToUpdate FrdSettle
-						err = db.View(func(tx *bolt.Tx) error {
-							b := tx.Bucket(allBkts)
-							if b == nil {
-								return nil
-							}
-							c := b.Cursor()
-							for k, v := c.First(); k != nil; k, v = c.Next() {
-								var tmp FrdSettle
-								buf2 := bytes.NewBuffer(v)
-								dec := gob.NewDecoder(buf2)
-								err = dec.Decode(&tmp)
-								if tmp.NickName == dat.name {
-									//change is necessary here if any user can add anyones bill
-									keyToUpdate = k
-									dataToUpdate.ID = dat.id
-									dataToUpdate.NickName = tmp.NickName
-									prev, err := strconv.Atoi(tmp.Owns)
-									checkError(err)
-									current, err := strconv.Atoi(dat.amount)
-									prevOwe, err := strconv.Atoi(tmp.Owes)
-									adj := prevOwe - current
-									if adj <= 0 {
-										dataToUpdate.Owes = "0"
-										adj = int(math.Abs(float64(adj)))
-										dataToUpdate.Owns = strconv.Itoa(prev + adj)
-									} else {
-										dataToUpdate.Owes = strconv.Itoa(adj)
-										dataToUpdate.Owns = "0"
-									}
-									gotData = true
-									break
-								}
-							}
-							return nil
-						})
+						sign.PeerID = dat.id
+						var buf bytes.Buffer
+						enc := gob.NewEncoder(&buf)
+						err = enc.Encode(sign)
 						checkError(err)
-						if gotData {
-							err = db.Update(func(tx *bolt.Tx) error {
-								bucket, err := tx.CreateBucketIfNotExists(allBkts)
-								if err != nil {
-									return err
-								}
-								var buftemp bytes.Buffer
-								enc := gob.NewEncoder(&buftemp)
-								err = enc.Encode(dataToUpdate)
-								err = bucket.Put(keyToUpdate, buftemp.Bytes())
+						signature, err := prvKey.Sign(buf.Bytes())
+						checkError(err)
+						bill.SignMe = sign
+						bill.Signature = signature
+						bill.Billup = true
+						temp, err := crypto.MarshalPublicKey(pubKey)
+						bill.PubKey = temp
+						buf.Reset()
+						enc = gob.NewEncoder(&buf)
+						err = enc.Encode(bill)
+						/*
+							var sendbill BillUpload
+							buf2 := bytes.NewBuffer(buf.Bytes())
+							dec := gob.NewDecoder(buf2)
+							err = dec.Decode(&sendbill)
+							fmt.Println(sendbill)
+						*/
+
+						var billInsert BillSave
+						billInsert.Uid = bill.UUID
+						billInsert.PeerID = bill.PeerID
+						billInsert.Description = bill.Description
+						billInsert.Amount = bill.Amount
+						billInsert.Date = bill.Date
+						billInsert.DateAdded = bill.DateAdded
+						billInsert.Type = 1
+						var tmpbuf bytes.Buffer
+						enc = gob.NewEncoder(&tmpbuf)
+						err = enc.Encode(billInsert)
+						err = db.Update(func(tx *bolt.Tx) error {
+							bucket, err := tx.CreateBucketIfNotExists([]byte(dat.name))
+							if err != nil {
 								return err
-							})
-							err = db.Update(func(tx *bolt.Tx) error {
-								bucket, err := tx.CreateBucketIfNotExists(queueName)
-								if err != nil {
-									return err
+							}
+							err = bucket.Put([]byte(sign.UUID), tmpbuf.Bytes())
+							return err
+						})
+						if err == nil {
+							var gotData bool
+							var keyToUpdate []byte
+							var dataToUpdate FrdSettle
+							err = db.View(func(tx *bolt.Tx) error {
+								b := tx.Bucket(allBkts)
+								if b == nil {
+									return nil
 								}
-								tmp, err := bucket.NextSequence()
-								checkError(err)
-								key := make([]byte, 8)
-								binary.LittleEndian.PutUint64(key, uint64(tmp))
-								err = bucket.Put(key, buf.Bytes())
-								return err
+								c := b.Cursor()
+								for k, v := c.First(); k != nil; k, v = c.Next() {
+									var tmp FrdSettle
+									buf2 := bytes.NewBuffer(v)
+									dec := gob.NewDecoder(buf2)
+									err = dec.Decode(&tmp)
+									if tmp.NickName == dat.name {
+										//change is necessary here if any user can add anyones bill
+										keyToUpdate = k
+										dataToUpdate.ID = dat.id
+										dataToUpdate.NickName = tmp.NickName
+										prev, err := strconv.Atoi(tmp.Owns)
+										checkError(err)
+										current, err := strconv.Atoi(dat.amount)
+										prevOwe, err := strconv.Atoi(tmp.Owes)
+										adj := prevOwe - current
+										if adj <= 0 {
+											dataToUpdate.Owes = "0"
+											adj = int(math.Abs(float64(adj)))
+											dataToUpdate.Owns = strconv.Itoa(prev + adj)
+										} else {
+											dataToUpdate.Owes = strconv.Itoa(adj)
+											dataToUpdate.Owns = "0"
+										}
+										gotData = true
+										break
+									}
+								}
+								return nil
 							})
 							checkError(err)
+							if gotData {
+								err = db.Update(func(tx *bolt.Tx) error {
+									bucket, err := tx.CreateBucketIfNotExists(allBkts)
+									if err != nil {
+										return err
+									}
+									var buftemp bytes.Buffer
+									enc := gob.NewEncoder(&buftemp)
+									err = enc.Encode(dataToUpdate)
+									err = bucket.Put(keyToUpdate, buftemp.Bytes())
+									return err
+								})
+								err = db.Update(func(tx *bolt.Tx) error {
+									bucket, err := tx.CreateBucketIfNotExists(queueName)
+									if err != nil {
+										return err
+									}
+									tmp, err := bucket.NextSequence()
+									checkError(err)
+									key := make([]byte, 8)
+									binary.LittleEndian.PutUint64(key, uint64(tmp))
+									err = bucket.Put(key, buf.Bytes())
+									return err
+								})
+								checkError(err)
+							}
 						}
 					}
-				}
-			}()
+				}()
+			}
 		}
 	}
 }

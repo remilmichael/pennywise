@@ -63,11 +63,22 @@ type SignMe struct {
 
 //for saving to disk
 type BillSave struct {
+	Uid         string
 	PeerID      string
 	Description string
 	Amount      string
 	Date        string
 	DateAdded   string
+	Type        int8 //Owns = 1, owes = 0
+}
+
+type DisplayBill struct {
+	Uid         string
+	Description string
+	Amount      string
+	Date        string
+	DateAdded   string
+	Type        int8
 }
 
 //stores incoming friend requests
@@ -89,3 +100,6 @@ var buddyBkt = []byte("buddies")
 //store all friends(buckets)
 //key = 8 byte random key, value = byte(struct FrdSettle)
 var allBkts = []byte("buckets")
+
+//bucket with username
+//key = byte(uid) value = byte(BillSave)

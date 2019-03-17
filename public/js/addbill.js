@@ -13,6 +13,8 @@ $(document).ready(function(){
         "info":     false,
         "searching": false
     });
+    $('#message').hide();
+    $('#output').hide();
     table.rows().remove().draw();
     $('#add').click(function(){
         var selected = $('#friends').find(":selected").text();
@@ -81,7 +83,9 @@ $(document).ready(function(){
                 dataType: 'html',
                 data: {des: desc, tamt: totamt, billdt: bdate, friends: names, amtsplit: splitval},
                 success: function(data) {
-                             
+                    $('#message').show();
+                    $('#output').show();
+                    $('#message').text(data);
                 },
                 error: function(error){
                     alert(error);
