@@ -211,9 +211,9 @@ func saveBill(str string) {
 				billInsert.Amount = verifyme.Amount
 				billInsert.Date = verifyme.Date
 				billInsert.DateAdded = verifyme.DateAdded
-				billInsert.Type = 0
-				var buf bytes.Buffer
-				enc := gob.NewEncoder(&buf)
+				billInsert.Type = 2
+				var insertbuf bytes.Buffer
+				enc := gob.NewEncoder(&insertbuf)
 				err = enc.Encode(billInsert)
 				checkError(err)
 				err = db.Update(func(tx *bolt.Tx) error {
@@ -222,7 +222,7 @@ func saveBill(str string) {
 						return err
 					}
 					key := []byte(verifyme.UUID)
-					err = bucket.Put(key, buf.Bytes())
+					err = bucket.Put(key, insertbuf.Bytes())
 					return err
 				})
 				checkError(err)
