@@ -278,7 +278,8 @@ func uploadBill(w http.ResponseWriter, r *http.Request) {
 						bill.SignMe = sign
 						bill.Signature = signature
 						bill.Billup = true
-						temp, err := crypto.MarshalPublicKey(pubKey)
+						rsakey, _ := pubKey.(*crypto.RsaPublicKey)
+						temp, err := crypto.MarshalRsaPublicKey(rsakey)
 						bill.PubKey = temp
 						buf.Reset()
 						enc = gob.NewEncoder(&buf)

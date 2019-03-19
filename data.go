@@ -69,7 +69,7 @@ type BillSave struct {
 	Amount      string
 	Date        string
 	DateAdded   string
-	Type        int8 //Owns = 1, owes = 0
+	Type        int8 //Owns = 1, Owes = 2
 }
 
 type DisplayBill struct {

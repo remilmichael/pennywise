@@ -37,7 +37,9 @@ func main() {
 	r.HandleFunc("/viewbill", viewbill)
 	r.HandleFunc("/addbill", addbill)
 	r.HandleFunc("/uploadbill", uploadBill)
-	r.HandleFunc("/home", home)
+	r.HandleFunc("/", home)
+	r.HandleFunc("/index", indexpage)
+
 	r.PathPrefix("/public/").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
 	srv := &http.Server{
 		Handler:      r,
@@ -162,6 +164,12 @@ func houseKeeping(state int8) {
 
 func home(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles("html/home.html")
+	checkError(err)
+	tmpl.Execute(w, "")
+}
+
+func indexpage(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("html/index.html")
 	checkError(err)
 	tmpl.Execute(w, "")
 }

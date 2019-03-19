@@ -88,7 +88,6 @@ func sendReq() {
 					buf = bytes.NewBuffer(v)
 					dec = gob.NewDecoder(buf)
 					err = dec.Decode(&sendbill)
-					//fmt.Println(sendbill)
 					checkError(err)
 					pid, err = peer.IDB58Decode(sendbill.SignMe.PeerID)
 					checkError(err)
@@ -98,9 +97,11 @@ func sendReq() {
 				tctx, _ := context.WithTimeout(ctx, time.Second*10)
 				pr, err := dhtClient.FindPeer(tctx, pid)
 				if err != nil {
+					log.Println(err)
 					//ignore
 				} else {
 					if err = thisHost.Connect(tctx, pr); err != nil {
+						log.Println(err)
 						thisHost.Network().(*swarm.Swarm).Backoff().Clear(pr.ID)
 					} else {
 						s, err := thisHost.NewStream(context.Background(), pid, "/cats")

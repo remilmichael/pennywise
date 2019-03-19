@@ -163,11 +163,12 @@ func saveFrdAck(str string) {
 func saveBill(str string) {
 	var err error
 	var bill BillUpload
-	var verifyme SignMe
+	var sigbuf bytes.Buffer
 	if err = json.Unmarshal([]byte(str), &bill); err != nil {
 		//ignore
 		log.Println(err)
 	} else {
+		var verifyme SignMe
 		verifyme.UUID = bill.UUID
 		verifyme.HostID = bill.HostID
 		verifyme.PeerID = bill.PeerID
@@ -175,14 +176,18 @@ func saveBill(str string) {
 		verifyme.Amount = bill.Amount
 		verifyme.Date = bill.Date
 		verifyme.DateAdded = bill.DateAdded
-		var buf bytes.Buffer
-		enc := gob.NewEncoder(&buf)
-		err = enc.Encode(verifyme)
+		out := make(chan bool)
+		go func(out chan<- bool) {
+			sigbuf.Reset()
+			encod := gob.NewEncoder(&sigbuf)
+			err = encod.Encode(verifyme)
+			out <- true
+		}(out)
+		<-out
 		checkError(err)
-		peerPubkey, err := crypto.UnmarshalPublicKey(bill.PubKey)
+		peerPubkey, err := crypto.UnmarshalRsaPublicKey(bill.PubKey)
 		checkError(err)
-		signValid, err := peerPubkey.Verify(buf.Bytes(), bill.Signature)
-		checkError(err)
+		signValid, err := peerPubkey.Verify(sigbuf.Bytes(), bill.Signature)
 		if signValid {
 			var frd Friend
 			var name string
@@ -279,6 +284,8 @@ func saveBill(str string) {
 					})
 				}
 			}
+		} else {
+			log.Println(err)
 		}
 	}
 }
